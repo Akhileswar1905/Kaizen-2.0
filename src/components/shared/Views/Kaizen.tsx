@@ -16,23 +16,36 @@ import { FinanceView } from "./FinanceView"
 import { SystemDesignHub } from "./SystemDesignTracker"
 import { NotesTracker } from "../Notes"
 import { StatusWindow } from "../Widgets/StatusWindow"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { WorkoutTracker } from "./WorkoutTracker"
 import { PlannerView } from "./PlannerView"
 import { TimeAuditView } from "./TimeAuditView"
 import { LearningChecklistView } from "./LearningChecklistView"
 import { HabitTrackerView } from "./HabitTrackerView"
 import { DashboardView } from "./DashboardView"
+import { CustomPageView } from "./CustomPageView"
+import { WorkspaceSettings } from "../Widgets/WorkspaceSettings"
+import { useWorkspace } from "@/contexts/WorkspaceContext"
+import { OPEN_VIEW_KEY, isCustomView } from "@/lib/workspace"
 
 export default function KaizenTracker() {
   const [isStatusOpen, setIsStatusOpen] = useState(false)
   const [isStreaksModalOpen, setIsStreaksModalOpen] = useState(false)
   const [isMultiplayerOpen, setIsMultiplayerOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [settingsTab, setSettingsTab] = useState<"pages" | "dashboard" | "general">("pages")
+  const openSettings = (tab: "pages" | "dashboard" | "general" = "pages") => {
+    setSettingsTab(tab)
+    setIsSettingsOpen(true)
+  }
   const [financeInitialTab, setFinanceInitialTab] = useState<"income" | "expenses" | "courses">("expenses")
+  const { isLoading: isWorkspaceLoading, isPageVisible, customPages, visiblePages } = useWorkspace()
 
   const {
     habits,
     logs,
+    miniLogs,
+    habitUpgradeNeeded,
     currentWeekStart,
     isLoading,
     toggleHabit,
@@ -123,9 +136,37 @@ export default function KaizenTracker() {
         )
       : 0
 
+  // Notifications ask for a page (e.g. "Open planner") through a window event.
+  useEffect(() => {
+    const onNavigate = (event: Event) => {
+      const view = (event as CustomEvent<string>).detail
+      if (view === "dashboard" || isPageVisible(view)) setActiveView(view as typeof activeView)
+    }
+    window.addEventListener("kaizen:navigate", onNavigate)
+    return () => window.removeEventListener("kaizen:navigate", onNavigate)
+  }, [isPageVisible, setActiveView])
+
+  // Open a page requested before we got here (e.g. a shared page just saved to this workspace).
+  useEffect(() => {
+    if (isWorkspaceLoading) return
+    const pending = sessionStorage.getItem(OPEN_VIEW_KEY)
+    if (!pending) return
+    sessionStorage.removeItem(OPEN_VIEW_KEY)
+    if (isPageVisible(pending)) setActiveView(pending as typeof activeView)
+  }, [isWorkspaceLoading, isPageVisible, setActiveView])
+
+  // If the current page gets hidden or deleted, fall back to the dashboard.
+  useEffect(() => {
+    if (!isWorkspaceLoading && !isPageVisible(activeView)) setActiveView("dashboard")
+  }, [isWorkspaceLoading, isPageVisible, activeView, setActiveView])
+
   const renderContent = () => {
+    if (isCustomView(activeView)) {
+      const page = customPages.find((item) => `custom:${item.id}` === activeView)
+      if (page) return <div className="kaizen-page kaizen-page--custom"><CustomPageView key={page.id} page={page} onOpenSettings={() => openSettings()} /></div>
+    }
     if (activeView === "habits") {
-      return <div className="kaizen-page kaizen-page--habits"><HabitTrackerView habits={habits} logs={logs} currentWeekStart={currentWeekStart} isLoading={isLoading} toggleHabit={toggleHabit} nextWeek={nextWeek} prevWeek={prevWeek} checksThisWeek={checksThisWeek} weekCompletionPct={weekCompletionPct} currentWeekDays={currentWeekDays} addHabit={addHabit} updateHabit={updateHabit} deleteHabit={deleteHabit} sundayReview={sundayReview} setSundayReview={setSundayReview} saveWeeklyReview={saveWeeklyReview} isSavingReview={isSavingReview} getHabitStreakDetails={getHabitStreakDetails} highestActiveStreak={highestActiveStreak} onOpenStatus={() => setIsStatusOpen(true)} onOpenMultiplayer={() => setIsMultiplayerOpen(true)} onOpenStreaks={() => setIsStreaksModalOpen(true)} /></div>
+      return <div className="kaizen-page kaizen-page--habits"><HabitTrackerView habits={habits} logs={logs} miniLogs={miniLogs} habitUpgradeNeeded={habitUpgradeNeeded} currentWeekStart={currentWeekStart} isLoading={isLoading} toggleHabit={toggleHabit} nextWeek={nextWeek} prevWeek={prevWeek} checksThisWeek={checksThisWeek} weekCompletionPct={weekCompletionPct} currentWeekDays={currentWeekDays} addHabit={addHabit} updateHabit={updateHabit} deleteHabit={deleteHabit} sundayReview={sundayReview} setSundayReview={setSundayReview} saveWeeklyReview={saveWeeklyReview} isSavingReview={isSavingReview} getHabitStreakDetails={getHabitStreakDetails} highestActiveStreak={highestActiveStreak} onOpenStatus={() => setIsStatusOpen(true)} onOpenMultiplayer={() => setIsMultiplayerOpen(true)} onOpenStreaks={() => setIsStreaksModalOpen(true)} /></div>
     }
     if (activeView === "dsa") {
       return <div className="kaizen-page kaizen-page--dsa"><DsaSheet /></div>
@@ -165,6 +206,7 @@ export default function KaizenTracker() {
         dsaCompleted={dsaCompleted}
         setActiveView={setActiveView}
         onOpenStatus={() => setIsStatusOpen(true)}
+        onOpenSettings={openSettings}
         onOpenFinanceTab={(tab) => { setFinanceInitialTab(tab); setActiveView("finance") }}
       />
     )
@@ -303,19 +345,19 @@ export default function KaizenTracker() {
 
       {renderContent()}
 
+      <WorkspaceSettings
+        key={`${settingsTab}-${isSettingsOpen}`}
+        isOpen={isSettingsOpen}
+        initialTab={settingsTab}
+        onClose={() => setIsSettingsOpen(false)}
+        onOpenPage={setActiveView}
+      />
+
       <FloatingMenu
-        onOpenDashboard={() => setActiveView("dashboard")}
-        onOpenHabits={() => setActiveView("habits")}
-        onOpenDSA={() => setActiveView("dsa")}
-        onOpenJournal={() => setActiveView("journal")}
-        onOpenFinance={() => setActiveView("finance")}
-        onOpenSystemDesign={() => setActiveView("system-design")}
-        onOpenNotes={() => setActiveView("notes")}
-        onOpenWorkoutTracker={() => setActiveView("workout-tracker")}
-        onOpenPlanner={() => setActiveView("planner")}
-        onOpenTimeAudit={() => setActiveView("time-audit")}
-        onOpenLearningChecklist={() => setActiveView("learning-checklist")}
+        pages={visiblePages}
         activeView={activeView}
+        onNavigate={setActiveView}
+        onOpenSettings={() => openSettings()}
       />
     </div>
   )

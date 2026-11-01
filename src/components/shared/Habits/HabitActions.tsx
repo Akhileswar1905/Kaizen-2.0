@@ -26,19 +26,29 @@ import {
 } from "@/components/ui/select"
 import { MoreVertical, Edit2, Trash2, Archive } from "lucide-react"
 import { IconPicker } from "../Widgets/IconPicker"
+import { HabitKaizenFields } from "./HabitKaizenFields"
+import { kaizenValuesOf } from "@/lib/habits"
 
 interface HabitActionsProps {
   habit: any
   onUpdate: (id: string, updates: any) => void
   onDelete: (id: string) => void
+  /** Other habits, offered for habit stacking. */
+  habitTitles?: string[]
 }
 
-export function HabitActions({ habit, onUpdate, onDelete }: HabitActionsProps) {
+export function HabitActions({
+  habit,
+  onUpdate,
+  onDelete,
+  habitTitles = [],
+}: HabitActionsProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [title, setTitle] = useState(habit.title)
   const [description, setDescription] = useState(habit.description || "")
   const [targetDays, setTargetDays] = useState(habit.target_days.toString())
   const [iconName, setIconName] = useState(habit.icon_name || "default")
+  const [kaizen, setKaizen] = useState(() => kaizenValuesOf(habit))
 
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,6 +57,10 @@ export function HabitActions({ habit, onUpdate, onDelete }: HabitActionsProps) {
       description,
       target_days: parseInt(targetDays),
       icon_name: iconName,
+      identity: kaizen.identity.trim(),
+      mini_version: kaizen.mini_version.trim(),
+      anchor: kaizen.anchor.trim(),
+      time_of_day: kaizen.time_of_day,
     })
     setIsEditDialogOpen(false)
   }
@@ -93,7 +107,7 @@ export function HabitActions({ habit, onUpdate, onDelete }: HabitActionsProps) {
 
       {/* Inline Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-106.25">
+        <DialogContent className="max-h-[92svh] overflow-y-auto sm:max-w-120">
           <DialogHeader>
             <DialogTitle>Edit Habit</DialogTitle>
             <DialogDescription>
@@ -142,6 +156,11 @@ export function HabitActions({ habit, onUpdate, onDelete }: HabitActionsProps) {
                 />
               </div>
             </div>
+            <HabitKaizenFields
+              values={kaizen}
+              onChange={setKaizen}
+              otherHabits={habitTitles.filter((title) => title !== habit.title)}
+            />
             <DialogFooter className="mt-4">
               <Button type="submit" className="w-full">
                 Save Changes

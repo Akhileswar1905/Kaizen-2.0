@@ -56,6 +56,10 @@ function inputToRow(input: TimeBlockInput) {
   }
 }
 
+// Lets the notification scheduler refresh as soon as the planner changes.
+const announceChange = () =>
+  window.dispatchEvent(new Event("kaizen:time-blocks-changed"))
+
 export function toMinutes(time: string): number {
   const [h, m] = time.split(":").map(Number)
   return h * 60 + m
@@ -139,6 +143,7 @@ export function useTimeBlocks(weekStart: Date) {
         setError(insertError.message)
         return false
       }
+      announceChange()
       const block = rowToBlock(data as BlockRow)
       // Only show it if it falls in the week currently on screen.
       if (block.date >= from && block.date <= to) {
@@ -160,6 +165,7 @@ export function useTimeBlocks(weekStart: Date) {
         setError(updateError.message)
         return false
       }
+      announceChange()
       setBlocks((current) => {
         const moved = input.date < from || input.date > to
         if (moved) return current.filter((b) => b.id !== id)
@@ -185,7 +191,7 @@ export function useTimeBlocks(weekStart: Date) {
     if (deleteError) {
       setError(deleteError.message)
       setBlocks(previous) // revert on failure
-    }
+    } else announceChange()
   }, [])
 
   return { blocks, loading, error, addBlock, updateBlock, deleteBlock }

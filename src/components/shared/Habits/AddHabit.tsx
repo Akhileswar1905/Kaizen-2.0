@@ -20,17 +20,23 @@ import {
 } from "@/components/ui/select"
 import { Plus } from "lucide-react"
 import { IconPicker } from "../Widgets/IconPicker"
+import { HabitKaizenFields } from "./HabitKaizenFields"
+import { EMPTY_KAIZEN_VALUES } from "@/lib/habits"
 
 export function AddHabitModal({
   onAddHabit,
+  habitTitles = [],
 }: {
   onAddHabit: (habit: any) => void
+  /** Existing habits, offered for habit stacking. */
+  habitTitles?: string[]
 }) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [targetDays, setTargetDays] = useState("7")
   const [selectedIcon, setSelectedIcon] = useState<string>("Activity")
+  const [kaizen, setKaizen] = useState(EMPTY_KAIZEN_VALUES)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,12 +45,17 @@ export function AddHabitModal({
       description,
       target_days: parseInt(targetDays),
       icon_name: selectedIcon,
+      identity: kaizen.identity.trim(),
+      mini_version: kaizen.mini_version.trim(),
+      anchor: kaizen.anchor.trim(),
+      time_of_day: kaizen.time_of_day,
     })
     // Reset and close
     setTitle("")
     setDescription("")
     setTargetDays("7")
     setSelectedIcon("Activity")
+    setKaizen(EMPTY_KAIZEN_VALUES)
     setOpen(false)
   }
 
@@ -55,7 +66,7 @@ export function AddHabitModal({
           <Plus className="h-4 w-full" /> Add Habit
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-120">
+      <DialogContent className="max-h-[92svh] overflow-y-auto sm:max-w-120">
         <DialogHeader>
           <DialogTitle>New Habit</DialogTitle>
           <DialogDescription>
@@ -106,6 +117,11 @@ export function AddHabitModal({
               />
             </div>
           </div>
+          <HabitKaizenFields
+            values={kaizen}
+            onChange={setKaizen}
+            otherHabits={habitTitles}
+          />
           <DialogFooter className="mt-4">
             <Button type="submit" className="w-full">
               Create Habit

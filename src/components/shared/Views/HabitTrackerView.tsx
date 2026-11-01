@@ -9,14 +9,25 @@ import { HabitActions } from "../Habits/HabitActions"
 import * as Icons from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Habit } from "@/hooks/useTracker"
-import type { Dispatch, SetStateAction } from "react"
+import { useMemo, type Dispatch, type SetStateAction } from "react"
+import { TodayRitual } from "../Habits/TodayRitual"
+import { OnePercentCurve } from "../Habits/OnePercentCurve"
+import { IdentityVotes } from "../Habits/IdentityVotes"
+import {
+  compoundingCurve,
+  identitySummaries,
+  type CheckInMode,
+} from "@/lib/habits"
 
 type HabitTrackerViewProps = {
   habits: Habit[]
   logs: Record<string, boolean>
+  miniLogs: Record<string, boolean>
+  /** The database is missing the columns from plans_and_habits.sql. */
+  habitUpgradeNeeded: boolean
   currentWeekStart: Date
   isLoading: boolean
-  toggleHabit: (habitId: string, date: Date) => void
+  toggleHabit: (habitId: string, date: Date, mode?: CheckInMode) => unknown
   nextWeek: () => void
   prevWeek: () => void
   checksThisWeek: number
@@ -38,12 +49,17 @@ type HabitTrackerViewProps = {
 
 export function HabitTrackerView(props: HabitTrackerViewProps) {
   const {
-    habits, logs, currentWeekStart, isLoading, toggleHabit, nextWeek, prevWeek,
+    habits, logs, miniLogs, habitUpgradeNeeded, currentWeekStart, isLoading, toggleHabit, nextWeek, prevWeek,
     checksThisWeek, weekCompletionPct, currentWeekDays, addHabit, updateHabit,
     deleteHabit, sundayReview, setSundayReview, saveWeeklyReview, isSavingReview,
     getHabitStreakDetails, highestActiveStreak, onOpenStatus, onOpenMultiplayer,
     onOpenStreaks,
   } = props
+
+  const activeHabits = useMemo(() => habits.filter((habit) => !habit.is_archived), [habits])
+  const habitTitles = activeHabits.map((habit) => habit.title)
+  const identities = useMemo(() => identitySummaries(habits, logs), [habits, logs])
+  const curve = useMemo(() => compoundingCurve(habits, logs, miniLogs), [habits, logs, miniLogs])
 
   return (
       <main className="habit-tracker-page w-full space-y-6 text-foreground antialiased">
@@ -52,15 +68,25 @@ export function HabitTrackerView(props: HabitTrackerViewProps) {
               <div>
                 <p className="text-xs font-bold tracking-[0.16em] text-muted-foreground">HABIT TRACKER</p>
                 <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Build your rhythm.</h1>
-                <p className="mt-1 text-sm text-muted-foreground">A little progress, repeated every day.</p>
+                <p className="mt-1 text-sm text-muted-foreground">1% better every day. Small votes add up to who you become.</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="mr-1 text-sm font-semibold text-muted-foreground">{format(new Date(), "EEEE, d MMMM")}</span>
                 <Button variant="outline" size="icon" onClick={onOpenStatus} className="h-9 w-9 rounded-xl" title="Your status"><UserCircle className="h-4 w-4" /></Button>
                 <Button variant="outline" size="icon" onClick={onOpenMultiplayer} className="h-9 w-9 rounded-xl" title="Multiplayer"><Users className="h-4 w-4" /></Button>
-                <AddHabitModal onAddHabit={addHabit} />
+                <AddHabitModal onAddHabit={addHabit} habitTitles={habitTitles} />
               </div>
             </header>
+
+            {habitUpgradeNeeded && (
+              <p role="status" className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+                Identities, 2-minute versions and habit stacks can't be saved yet. Run <code className="font-semibold">supabase/plans_and_habits.sql</code> in the Supabase SQL Editor, then try again.
+              </p>
+            )}
+
+            {!isLoading && activeHabits.length > 0 && (
+              <TodayRitual habits={activeHabits} logs={logs} miniLogs={miniLogs} toggleHabit={toggleHabit} />
+            )}
 
             <section className="space-y-6">
               <div className="min-w-0 space-y-6">
@@ -91,7 +117,7 @@ export function HabitTrackerView(props: HabitTrackerViewProps) {
                       <Activity className="h-7 w-7 text-muted-foreground" />
                       <h3 className="mt-3 font-bold">Start with one small habit</h3>
                       <p className="mt-1 max-w-xs text-sm text-muted-foreground">Add a routine you want to make part of your everyday life.</p>
-                      <div className="mt-4"><AddHabitModal onAddHabit={addHabit} /></div>
+                      <div className="mt-4"><AddHabitModal onAddHabit={addHabit} habitTitles={habitTitles} /></div>
                     </div>
                   ) : (
                     <div className="divide-y divide-border/60">
@@ -113,30 +139,36 @@ export function HabitTrackerView(props: HabitTrackerViewProps) {
                                 <p className="truncate text-sm font-semibold">{habit.title}</p>
                                 {habit.description && <p className="truncate text-xs text-muted-foreground">{habit.description}</p>}
                               </div>
-                              <div className="sm:hidden"><HabitActions habit={habit} onUpdate={updateHabit} onDelete={deleteHabit} /></div>
+                              <div className="sm:hidden"><HabitActions habit={habit} onUpdate={updateHabit} onDelete={deleteHabit} habitTitles={habitTitles} /></div>
                             </div>
                             <div className="flex items-center justify-between rounded-xl bg-muted/35 px-2 py-2 sm:contents">
                               {currentWeekDays.map((date) => {
                                 const dateStr = format(date, "yyyy-MM-dd")
                                 const isChecked = Boolean(logs[`${habit.id}-${dateStr}`])
+                                const isMini = isChecked && Boolean(miniLogs[`${habit.id}-${dateStr}`])
                                 const isFrozenDay = dateStr === frozenDateStr
                                 return (
                                   <div key={dateStr} className="flex flex-col items-center gap-1.5">
                                     <span className="text-[9px] font-semibold text-muted-foreground sm:hidden">{format(date, "EEEEE")}</span>
-                                    {isFrozenDay ? <span title="Streak freeze auto-applied" className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background text-muted-foreground"><Snowflake className="h-3.5 w-3.5" /></span> : <Checkbox checked={isChecked} onCheckedChange={() => toggleHabit(habit.id, date)} className="h-7 w-7 rounded-full border-muted-foreground/30 data-[state=checked]:border-foreground data-[state=checked]:bg-foreground data-[state=checked]:text-background" />}
+                                    {isFrozenDay ? <span title="Streak freeze auto-applied" className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background text-muted-foreground"><Snowflake className="h-3.5 w-3.5" /></span> : <Checkbox checked={isChecked} onCheckedChange={() => toggleHabit(habit.id, date)} aria-label={`${habit.title}, ${format(date, "EEEE d MMMM")}${isMini ? " (2-minute version)" : ""}`} title={isMini ? `2-minute version: ${habit.mini_version}. Click to upgrade to the full habit.` : undefined} className={cn("h-7 w-7 rounded-full border-muted-foreground/30 data-[state=checked]:text-background", isMini ? "data-[state=checked]:border-foreground/50 data-[state=checked]:bg-foreground/45" : "data-[state=checked]:border-foreground data-[state=checked]:bg-foreground")} />}
                                   </div>
                                 )
                               })}
                             </div>
                             <div className="flex items-center justify-between sm:justify-end sm:gap-2">
                               <span className={cn("text-xs font-semibold tabular-nums", isTargetMet ? "text-foreground" : "text-muted-foreground")}>{completedCount}/{habit.target_days}</span>
-                              <div className="hidden sm:block"><HabitActions habit={habit} onUpdate={updateHabit} onDelete={deleteHabit} /></div>
+                              <div className="hidden sm:block"><HabitActions habit={habit} onUpdate={updateHabit} onDelete={deleteHabit} habitTitles={habitTitles} /></div>
                             </div>
                           </div>
                         )
                       })}
                     </div>
                   )}
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[3fr_2fr]">
+                  <OnePercentCurve points={curve} />
+                  <IdentityVotes identities={identities} />
                 </div>
 
                 <div className="rounded-2xl border border-border/70 bg-card p-5 sm:p-6">

@@ -1,74 +1,97 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
-  BicepsFlexed,
-  Book,
-  BookOpen,
-  Calendar,
-  GraduationCap,
-  Grid2x2,
+  Bell,
   LayoutDashboard,
-  ListChecks,
   MoreHorizontal,
-  StickyNote,
-  Target,
-  Wallet,
+  Settings2,
   X,
 } from "lucide-react"
+import { useNotifications } from "@/contexts/NotificationContext"
 import { cn } from "@/lib/utils"
-
-const HIDDEN_MENU_ITEMS = ["journal", "system-design", "workout-tracker", "time-audit"] as const
+import type { WorkspacePage } from "@/contexts/WorkspaceContext"
+import { resolveIcon, type ActiveView } from "@/lib/workspace"
 
 interface FloatingMenuProps {
-  onOpenDashboard: () => void
-  onOpenHabits: () => void
-  onOpenDSA: () => void
-  onOpenJournal: () => void
-  onOpenFinance: () => void
-  onOpenSystemDesign: () => void
-  onOpenNotes?: () => void
-  onOpenWorkoutTracker?: () => void
-  onOpenPlanner?: () => void
-  onOpenTimeAudit?: () => void
-  onOpenLearningChecklist?: () => void
+  pages: WorkspacePage[]
   activeView: string
+  onNavigate: (view: ActiveView) => void
+  onOpenSettings: () => void
 }
 
 export function FloatingMenu({
-  onOpenDashboard,
-  onOpenHabits,
-  onOpenDSA,
-  onOpenJournal,
-  onOpenFinance,
-  onOpenSystemDesign,
-  onOpenNotes,
-  onOpenWorkoutTracker,
-  onOpenPlanner,
-  onOpenTimeAudit,
-  onOpenLearningChecklist,
+  pages,
   activeView,
+  onNavigate,
+  onOpenSettings,
 }: FloatingMenuProps) {
   const [moreOpen, setMoreOpen] = useState(false)
 
   const items = [
-    { label: "Dashboard", view: "dashboard", icon: LayoutDashboard, action: onOpenDashboard },
-    { label: "Habits", view: "habits", icon: Target, action: onOpenHabits },
-    { label: "DSA", view: "dsa", icon: GraduationCap, action: onOpenDSA },
-    { label: "Finance", view: "finance", icon: Wallet, action: onOpenFinance },
-    { label: "Notes", view: "notes", icon: StickyNote, action: () => onOpenNotes?.() },
-    { label: "Planner", view: "planner", icon: Calendar, action: () => onOpenPlanner?.() },
-    { label: "Learning", view: "learning-checklist", icon: ListChecks, action: () => onOpenLearningChecklist?.() },
-    ...(!HIDDEN_MENU_ITEMS.includes("journal") ? [{ label: "Journal", view: "journal", icon: BookOpen, action: onOpenJournal }] : []),
-    ...(!HIDDEN_MENU_ITEMS.includes("system-design") ? [{ label: "System design", view: "system-design", icon: Book, action: onOpenSystemDesign }] : []),
-    ...(!HIDDEN_MENU_ITEMS.includes("workout-tracker") ? [{ label: "Workout", view: "workout-tracker", icon: BicepsFlexed, action: () => onOpenWorkoutTracker?.() }] : []),
-    ...(!HIDDEN_MENU_ITEMS.includes("time-audit") ? [{ label: "Time audit", view: "time-audit", icon: Grid2x2, action: () => onOpenTimeAudit?.() }] : []),
+    {
+      label: "Dashboard",
+      view: "dashboard" as ActiveView,
+      icon: LayoutDashboard,
+      action: () => onNavigate("dashboard"),
+    },
+    ...pages.map((page) => ({
+      label: page.label,
+      view: page.id as ActiveView,
+      icon: resolveIcon(page.icon),
+      action: () => onNavigate(page.id),
+    })),
   ]
+  const settingsItem = {
+    label: "Customize",
+    view: "settings" as ActiveView,
+    icon: Settings2,
+    action: onOpenSettings,
+  }
+  const { openCenter } = useNotifications()
+  const notificationsItem = {
+    label: "Reminders",
+    view: "notifications" as ActiveView,
+    icon: Bell,
+    action: openCenter,
+  }
 
-  const mobilePrimary = items.filter((item) =>
-    ["dashboard", "habits", "dsa", "planner"].includes(item.view)
-  )
-  const mobileMore = items.filter((item) => !mobilePrimary.includes(item))
+  const mobilePrimary = items.slice(0, 4)
+  const mobileMore = [...items.slice(4), notificationsItem, settingsItem]
+  // On wider screens the dock shows this many pages; the rest go under "More".
+  const DESKTOP_DOCK_PAGES = 10
+  const desktopPrimary = items.slice(0, DESKTOP_DOCK_PAGES)
+  const desktopMore = items.slice(DESKTOP_DOCK_PAGES)
   const moreIsActive = mobileMore.some((item) => item.view === activeView)
+  const desktopMoreIsActive = desktopMore.some(
+    (item) => item.view === activeView
+  )
+
+  const renderMoreGrid = (list: typeof items, className: string) => (
+    <div
+      className={cn(
+        "kaizen-dock-more pointer-events-auto absolute right-3 bottom-[calc(100%+0.65rem)] grid w-[min(19rem,calc(100vw-1.5rem))] grid-cols-3 gap-2 rounded-2xl border border-border/70 bg-card/95 p-3 shadow-2xl backdrop-blur-xl",
+        className
+      )}
+    >
+      {list.map((item) => (
+        <button
+          key={item.view}
+          type="button"
+          onClick={() => navigate(item.action)}
+          aria-current={activeView === item.view ? "page" : undefined}
+          className={cn(
+            "flex min-w-0 flex-col items-center justify-center gap-2 rounded-xl px-2 py-3 text-center text-[11px] font-semibold transition-colors",
+            activeView === item.view
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          <item.icon className="h-5 w-5" strokeWidth={2} />
+          <span className="w-full truncate">{item.label}</span>
+        </button>
+      ))}
+    </div>
+  )
 
   const navigate = (action: () => void) => {
     action()
@@ -93,7 +116,10 @@ export function FloatingMenu({
           : "text-muted-foreground"
       )}
     >
-      <item.icon className="h-5 w-5" strokeWidth={activeView === item.view ? 2.5 : 1.9} />
+      <item.icon
+        className="h-5 w-5"
+        strokeWidth={activeView === item.view ? 2.5 : 1.9}
+      />
     </Button>
   )
 
@@ -107,25 +133,9 @@ export function FloatingMenu({
             className="pointer-events-auto fixed inset-0 z-[-1] bg-background/20"
             onClick={() => setMoreOpen(false)}
           />
-          <div className="kaizen-dock-more pointer-events-auto absolute bottom-[calc(100%+0.65rem)] right-3 grid w-[min(19rem,calc(100vw-1.5rem))] grid-cols-3 gap-2 rounded-2xl border border-border/70 bg-card/95 p-3 shadow-2xl backdrop-blur-xl sm:hidden">
-            {mobileMore.map((item) => (
-              <button
-                key={item.view}
-                type="button"
-                onClick={() => navigate(item.action)}
-                aria-current={activeView === item.view ? "page" : undefined}
-                className={cn(
-                  "flex min-w-0 flex-col items-center justify-center gap-2 rounded-xl px-2 py-3 text-center text-[11px] font-semibold transition-colors",
-                  activeView === item.view
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <item.icon className="h-5 w-5" strokeWidth={2} />
-                <span className="w-full truncate">{item.label}</span>
-              </button>
-            ))}
-          </div>
+          {renderMoreGrid(mobileMore, "sm:hidden")}
+          {desktopMore.length > 0 &&
+            renderMoreGrid(desktopMore, "hidden sm:grid sm:right-auto")}
         </>
       )}
 
@@ -145,12 +155,44 @@ export function FloatingMenu({
               : ""
           )}
         >
-          {moreOpen ? <X className="h-5 w-5" /> : <MoreHorizontal className="h-5 w-5" />}
+          {moreOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <MoreHorizontal className="h-5 w-5" />
+          )}
         </Button>
       </div>
 
       <div className="kaizen-dock pointer-events-auto hidden max-w-[calc(100vw-1.5rem)] items-end gap-1.5 rounded-2xl p-2 sm:flex sm:gap-2 sm:p-2.5">
-        {items.map((item) => renderIconButton(item))}
+        {desktopPrimary.map((item) => renderIconButton(item))}
+        {desktopMore.length > 0 && (
+          <Button
+            variant="ghost"
+            size="icon"
+            title={`${desktopMore.length} more pages`}
+            aria-label={moreOpen ? "Close more pages" : "More pages"}
+            aria-expanded={moreOpen}
+            onClick={() => setMoreOpen((open) => !open)}
+            className={cn(
+              "h-12 w-12 shrink-0 rounded-xl text-muted-foreground hover:bg-primary/10 hover:text-primary",
+              moreOpen || desktopMoreIsActive
+                ? "bg-foreground/10 text-foreground ring-1 ring-foreground/10"
+                : ""
+            )}
+          >
+            {moreOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <MoreHorizontal className="h-5 w-5" />
+            )}
+          </Button>
+        )}
+        <span
+          className="mx-0.5 h-8 w-px self-center bg-border/70"
+          aria-hidden
+        />
+        {renderIconButton(notificationsItem)}
+        {renderIconButton(settingsItem)}
       </div>
     </div>
   )

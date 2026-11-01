@@ -31,7 +31,7 @@ export function LearningChecklistView() {
     (filter === "all" || (filter === "completed" ? item.is_completed : !item.is_completed)) &&
     (!search.trim() || `${item.title} ${item.description}`.toLowerCase().includes(search.trim().toLowerCase()))
   ), [items, selected, filter, search])
-  const openCreate = (cat = selected === "All" ? (categories[0] ?? "DSA") : selected) => {
+  const openCreate = (cat = selected === "All" ? (categories[0] ?? "General") : selected) => {
     setEditing(null); setTitle(""); setDescription(""); setCategory(cat); setActionError(null); setDialog(true)
   }
   const openEdit = (item: LearningChecklistItem) => {

@@ -18,8 +18,14 @@ import {
   Plus,
   Edit3,
   FileText,
+  FileInput,
   X,
 } from "lucide-react"
+import { useWorkspace } from "@/contexts/WorkspaceContext"
+import {
+  customViewId,
+  requestOpenView,
+} from "@/lib/workspace"
 import {
   differenceInCalendarDays,
   format,
@@ -65,7 +71,6 @@ interface FolderRow {
   name: string
 }
 
-
 // Each tag gets a stable colour derived from its name, so "Study" is always
 // the same hue wherever it appears.
 const TAG_STYLES = [
@@ -80,11 +85,18 @@ const TAG_STYLES = [
 function tagStyle(tag: string | null): string {
   if (!tag) return "bg-muted text-muted-foreground"
   let hash = 0
-  for (let i = 0; i < tag.length; i++) hash = (hash * 31 + tag.charCodeAt(i)) >>> 0
+  for (let i = 0; i < tag.length; i++)
+    hash = (hash * 31 + tag.charCodeAt(i)) >>> 0
   return TAG_STYLES[hash % TAG_STYLES.length]
 }
 
-function TagPill({ tag, className }: { tag: string | null; className?: string }) {
+function TagPill({
+  tag,
+  className,
+}: {
+  tag: string | null
+  className?: string
+}) {
   if (!tag) return null
   return (
     <span
@@ -206,6 +218,29 @@ export function NotesTracker() {
   const { user } = useAuth()
   const { triggerGamificationEvent, subtractGamificationPoints } =
     useGamification()
+  const { createCustomPage, canCreatePage, pageLimit, openUpgrade } =
+    useWorkspace()
+  const [isConverting, setIsConverting] = useState(false)
+  const [convertError, setConvertError] = useState<string | null>(null)
+
+  // Copies the note into a custom page (with its own menu spot, sharing and
+  // autosave). The original note stays here.
+  const convertToPage = async (note: Note) => {
+    setIsConverting(true)
+    setConvertError(null)
+    const result = await createCustomPage({
+      title: note.title.slice(0, 60) || "Untitled page",
+      icon_name: "StickyNote",
+      kind: "page",
+      content: { html: note.content },
+    })
+    setIsConverting(false)
+    if (result.error || !result.page) {
+      setConvertError(result.error)
+      return
+    }
+    requestOpenView(customViewId(result.page.id))
+  }
 
   const [notes, setNotes] = useState<Note[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -486,7 +521,9 @@ export function NotesTracker() {
   }, [filteredNotes])
 
   const hasActiveFilters =
-    searchQuery !== "" || activeFilterTag !== "All" || activeFilterFolder !== null
+    searchQuery !== "" ||
+    activeFilterTag !== "All" ||
+    activeFilterFolder !== null
   const showPanel = Boolean(selectedNote) || isEditing
 
   if (loading) {
@@ -575,7 +612,9 @@ export function NotesTracker() {
           <div className="flex shrink-0 items-center gap-2">
             <Select
               value={activeFilterFolder ?? "all"}
-              onValueChange={(v) => setActiveFilterFolder(v === "all" ? null : v)}
+              onValueChange={(v) =>
+                setActiveFilterFolder(v === "all" ? null : v)
+              }
             >
               <SelectTrigger
                 aria-label="Filter by folder"
@@ -705,7 +744,9 @@ export function NotesTracker() {
                                   <button
                                     type="button"
                                     onClick={() => handleSelectNote(note)}
-                                    aria-current={isCurrent ? "true" : undefined}
+                                    aria-current={
+                                      isCurrent ? "true" : undefined
+                                    }
                                     className={cn(
                                       "flex w-full flex-col gap-1.5 rounded-xl px-3.5 py-3 text-left transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                                       isCurrent
@@ -731,7 +772,9 @@ export function NotesTracker() {
                                       {folder && (
                                         <span className="inline-flex min-w-0 items-center gap-1 text-[11px] font-medium text-muted-foreground">
                                           <Folder className="h-3 w-3 shrink-0" />
-                                          <span className="truncate">{folder}</span>
+                                          <span className="truncate">
+                                            {folder}
+                                          </span>
                                         </span>
                                       )}
                                     </div>
@@ -751,7 +794,7 @@ export function NotesTracker() {
               {showPanel && (
                 <div
                   className={cn(
-                    "min-h-0 min-w-0 flex-1 flex-col bg-card/60 animate-in fade-in duration-200 sm:slide-in-from-right-4",
+                    "min-h-0 min-w-0 flex-1 animate-in flex-col bg-card/60 duration-200 fade-in sm:slide-in-from-right-4",
                     mobileView === "list" ? "hidden sm:flex" : "flex"
                   )}
                 >
@@ -801,6 +844,31 @@ export function NotesTracker() {
                             className="gap-1.5 text-xs font-semibold"
                           >
                             <Edit3 className="h-3.5 w-3.5" /> Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              canCreatePage
+                                ? void convertToPage(selectedNote)
+                                : openUpgrade()
+                            }
+                            disabled={isConverting}
+                            className="gap-1.5 text-xs font-semibold"
+                            title={
+                              canCreatePage
+                                ? "Copy this note into its own page in your menu"
+                                : `You've used all ${pageLimit} pages. Get more pages to convert this note.`
+                            }
+                          >
+                            {isConverting ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <FileInput className="h-3.5 w-3.5" />
+                            )}
+                            <span className="hidden sm:inline">
+                              Make a page
+                            </span>
                           </Button>
                           <Button
                             variant="ghost"
@@ -861,6 +929,15 @@ export function NotesTracker() {
                       )}
                     </div>
                   </div>
+
+                  {convertError && (
+                    <p
+                      role="alert"
+                      className="border-b border-destructive/20 bg-destructive/5 px-5 py-2 text-xs font-semibold text-destructive sm:px-8"
+                    >
+                      {convertError}
+                    </p>
+                  )}
 
                   {/* Content area */}
                   <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-8 md:px-12">
@@ -949,7 +1026,10 @@ export function NotesTracker() {
                         />
 
                         <div className="flex-1 pb-12">
-                          <RichTextEditor value={content} onChange={setContent} />
+                          <RichTextEditor
+                            value={content}
+                            onChange={setContent}
+                          />
                         </div>
                       </form>
                     ) : (

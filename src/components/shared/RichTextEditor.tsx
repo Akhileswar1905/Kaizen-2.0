@@ -1,7 +1,5 @@
 import { EditorContent, useEditor } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
-import Underline from "@tiptap/extension-underline"
-import Link from "@tiptap/extension-link"
 
 import {
   Bold,
@@ -36,13 +34,10 @@ export function RichTextEditor({
   const editor = useEditor({
     immediatelyRender: false,
     editable,
+    // StarterKit v3 already includes Underline and Link; registering them again duplicates them.
     extensions: [
-      StarterKit,
-      Underline,
-      Link.configure({
-        openOnClick: false,
-        autolink: true,
-        defaultProtocol: "https",
+      StarterKit.configure({
+        link: { openOnClick: false, autolink: true, defaultProtocol: "https" },
       }),
     ],
     content: value,

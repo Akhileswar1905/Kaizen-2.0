@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/AuthContext"
+import { useWorkspace } from "@/contexts/WorkspaceContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -99,6 +100,7 @@ const getCategoryIcon = (category: string, className: string = "h-4 w-4") => {
 
 export function ExpenseTracker() {
   const { user } = useAuth()
+  const { formatMoney, currencySymbol } = useWorkspace()
   const { triggerGamificationEvent, subtractGamificationPoints } =
     useGamification()
 
@@ -353,10 +355,10 @@ export function ExpenseTracker() {
             </div>
             <div className="mt-4 flex items-baseline gap-1">
               <span className="text-xl font-light text-muted-foreground">
-                ₹
+                {currencySymbol}
               </span>
               <span className="text-4xl font-black tracking-tighter text-foreground">
-                {totalSpent.toLocaleString("en-IN")}
+                {totalSpent.toLocaleString()}
               </span>
             </div>
           </CardContent>
@@ -394,7 +396,7 @@ export function ExpenseTracker() {
                 {highestCategory?.name || "N/A"}
               </span>
               <span className="text-sm font-medium text-muted-foreground">
-                ₹{highestCategory?.amount.toLocaleString("en-IN") || 0}
+                {formatMoney(highestCategory?.amount || 0)}
               </span>
             </div>
           </CardContent>
@@ -428,10 +430,10 @@ export function ExpenseTracker() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold">
-                          ₹{budget.spent.toLocaleString("en-IN")}
+                          {formatMoney(budget.spent)}
                         </span>
                         <span className="text-muted-foreground">
-                          / ₹{budget.limit.toLocaleString("en-IN")}
+                          / {formatMoney(budget.limit)}
                         </span>
                       </div>
                     </div>
@@ -446,8 +448,8 @@ export function ExpenseTracker() {
                     </div>
                     {budget.remaining < 0 && (
                       <p className="flex items-center gap-1.5 text-xs font-medium text-destructive">
-                        <AlertCircle className="h-3 w-3" /> Over budget by ₹
-                        {Math.abs(budget.remaining).toLocaleString("en-IN")}
+                        <AlertCircle className="h-3 w-3" /> Over budget by{" "}
+                        {formatMoney(Math.abs(budget.remaining))}
                       </p>
                     )}
                   </div>
@@ -484,7 +486,7 @@ export function ExpenseTracker() {
               </div>
               <div className="space-y-2">
                 <label className="ml-1 text-[10px] font-bold tracking-tighter text-muted-foreground uppercase">
-                  Limit Amount (₹)
+                  Limit Amount ({currencySymbol})
                 </label>
                 <Input
                   type="number"
@@ -544,7 +546,7 @@ export function ExpenseTracker() {
                   tickLine={false}
                   axisLine={false}
                   stroke="hsl(var(--muted-foreground))"
-                  tickFormatter={(val) => `₹${val}`}
+                  tickFormatter={(val) => `${currencySymbol}${val}`}
                 />
                 <ChartTooltip
                   cursor={{ fill: "hsl(var(--muted)/0.4)" }}
@@ -599,7 +601,7 @@ export function ExpenseTracker() {
                   tickLine={false}
                   axisLine={false}
                   stroke="hsl(var(--muted-foreground))"
-                  tickFormatter={(val) => `₹${val}`}
+                  tickFormatter={(val) => `${currencySymbol}${val}`}
                 />
                 <ChartTooltip
                   cursor={false}
@@ -654,7 +656,7 @@ export function ExpenseTracker() {
                     Total
                   </span>
                   <span className="text-lg font-black">
-                    ₹
+                    {currencySymbol}
                     {totalSpent > 999
                       ? (totalSpent / 1000).toFixed(1) + "k"
                       : totalSpent}
@@ -796,7 +798,7 @@ export function ExpenseTracker() {
               </div>
               <div className="flex items-center gap-4">
                 <span className="font-mono text-base font-black text-foreground">
-                  -₹{expense.amount.toLocaleString()}
+                  -{formatMoney(expense.amount)}
                 </span>
                 <Button
                   variant="ghost"

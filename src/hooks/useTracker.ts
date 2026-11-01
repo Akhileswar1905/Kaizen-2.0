@@ -6,6 +6,13 @@ import { supabase } from "@/lib/supabase"
 import * as Icons from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useGamification } from "@/contexts/GamificationContext"
+import type { ActiveView } from "@/lib/workspace"
+import {
+  HABIT_V2_FIELDS,
+  isMissingHabitColumn,
+  type CheckInMode,
+  type TimeOfDay,
+} from "@/lib/habits"
 
 export type Habit = {
   id: string
@@ -14,6 +21,18 @@ export type Habit = {
   target_days: number
   icon_name: string
   is_archived: boolean
+  // Added by supabase/plans_and_habits.sql; absent on older databases.
+  identity?: string
+  mini_version?: string
+  anchor?: string
+  time_of_day?: TimeOfDay
+  created_at?: string
+}
+
+const stripV2Fields = (fields: Record<string, unknown>) => {
+  const rest = { ...fields }
+  for (const field of HABIT_V2_FIELDS) delete rest[field]
+  return rest
 }
 
 export function useTracker() {
@@ -39,6 +58,10 @@ export function useTracker() {
 
   // Format: { "habitId-YYYY-MM-DD": true }
   const [logs, setLogs] = useState<Record<string, boolean>>({})
+  // Same keys; true when the check-in was the 2-minute version.
+  const [miniLogs, setMiniLogs] = useState<Record<string, boolean>>({})
+  // Set when the database is missing the columns from plans_and_habits.sql.
+  const [habitUpgradeNeeded, setHabitUpgradeNeeded] = useState(false)
 
   const [currentWeekStart, setCurrentWeekStart] = useState(
     () => startOfWeek(new Date(), { weekStartsOn: 1 }) // 1 = Monday
@@ -59,19 +82,7 @@ export function useTracker() {
   const [journals, setJournals] = useState<any[]>([])
   const [isSavingJournal, setIsSavingJournal] = useState(false)
 
-  const [activeView, setActiveView] = useState<
-    | "dashboard"
-    | "habits"
-    | "dsa"
-    | "journal"
-    | "finance"
-    | "system-design"
-    | "notes"
-    | "workout-tracker"
-    | "planner"
-    | "time-audit"
-    | "learning-checklist"
-  >("dashboard")
+  const [activeView, setActiveView] = useState<ActiveView>("dashboard")
 
   // Fetch initial data
   const fetchData = useCallback(async () => {
@@ -93,52 +104,73 @@ export function useTracker() {
 
     if (logsData) {
       const logMap: Record<string, boolean> = {}
+      const miniMap: Record<string, boolean> = {}
       logsData.forEach((log) => {
         logMap[`${log.habit_id}-${log.log_date}`] = log.is_completed
+        if (log.is_completed && log.is_mini)
+          miniMap[`${log.habit_id}-${log.log_date}`] = true
       })
       setLogs(logMap)
+      setMiniLogs(miniMap)
     }
 
     setIsLoading(false)
   }, [userId])
 
-  // Handle checking/unchecking a habit
-  const toggleHabit = async (habitId: string, date: Date) => {
+  // Handle checking/unchecking a habit. Pressing the mode a day already has
+  // clears it; pressing the other mode switches between full and 2-minute.
+  const toggleHabit = async (
+    habitId: string,
+    date: Date,
+    mode: CheckInMode = "full"
+  ) => {
     const dateString = format(date, "yyyy-MM-dd")
     const logKey = `${habitId}-${dateString}`
     const currentStatus = logs[logKey] || false
-    const newStatus = !currentStatus
+    const wasMini = Boolean(currentStatus && miniLogs[logKey])
+    const current: CheckInMode | "none" = currentStatus
+      ? wasMini
+        ? "mini"
+        : "full"
+      : "none"
+    const next = current === mode ? "none" : mode
+    const newStatus = next !== "none"
 
     // Optimistic UI update (feels instant to the user)
     setLogs((prev) => ({ ...prev, [logKey]: newStatus }))
+    setMiniLogs((prev) => ({ ...prev, [logKey]: next === "mini" }))
 
-    // Background Database update
+    // Only send is_mini when it matters, so full check-ins keep working on
+    // databases that haven't run plans_and_habits.sql yet.
     const { error } = await supabase.from("habit_logs").upsert(
       {
         user_id: userId,
         habit_id: habitId,
         log_date: dateString,
         is_completed: newStatus,
+        ...(next === "mini" || wasMini ? { is_mini: next === "mini" } : {}),
       },
       { onConflict: "habit_id,log_date" }
     )
 
+    // Revert if Supabase fails
+    if (error) {
+      console.error("Failed to save log:", error)
+      if (isMissingHabitColumn(error.message)) setHabitUpgradeNeeded(true)
+      setLogs((prev) => ({ ...prev, [logKey]: currentStatus }))
+      setMiniLogs((prev) => ({ ...prev, [logKey]: wasMini }))
+      return null
+    }
+
     let result = null
-    if (newStatus) {
+    if (current === "none") {
       result = await triggerGamificationEvent({
         type: "HABIT_COMPLETED",
         amount: 1,
       })
-    } else {
+    } else if (next === "none") {
       // Subtract points when unchecking a habit to prevent point farming
       await subtractGamificationPoints({ type: "HABIT_COMPLETED", amount: 1 })
-    }
-
-    // Revert if Supabase fails
-    if (error) {
-      console.error("Failed to save log:", error)
-      setLogs((prev) => ({ ...prev, [logKey]: currentStatus }))
-      return null
     }
 
     return result
@@ -200,11 +232,19 @@ export function useTracker() {
   }
 
   const addHabit = async (newHabit: any) => {
-    const { data, error } = await supabase
-      .from("habits")
-      .insert([{ ...newHabit, user_id: userId }]) // Inject user_id
-      .select()
-      .single()
+    const insert = (fields: Record<string, unknown>) =>
+      supabase
+        .from("habits")
+        .insert([{ ...fields, user_id: userId }]) // Inject user_id
+        .select()
+        .single()
+
+    let { data, error } = await insert(newHabit)
+    // Older database: save the basics and ask for the migration.
+    if (error && isMissingHabitColumn(error.message)) {
+      setHabitUpgradeNeeded(true)
+      ;({ data, error } = await insert(stripV2Fields(newHabit)))
+    }
 
     if (error) {
       console.error("Error adding habit:", error)
@@ -216,13 +256,20 @@ export function useTracker() {
   }
 
   const updateHabit = async (habitId: string, updates: any) => {
-    const { data, error } = await supabase
-      .from("habits")
-      .update(updates)
-      .eq("id", habitId)
-      .eq("user_id", userId) // Ensure users can only update their own habits
-      .select()
-      .single()
+    const update = (fields: Record<string, unknown>) =>
+      supabase
+        .from("habits")
+        .update(fields)
+        .eq("id", habitId)
+        .eq("user_id", userId) // Ensure users can only update their own habits
+        .select()
+        .single()
+
+    let { data, error } = await update(updates)
+    if (error && isMissingHabitColumn(error.message)) {
+      setHabitUpgradeNeeded(true)
+      ;({ data, error } = await update(stripV2Fields(updates)))
+    }
 
     if (error) {
       console.error("Error updating habit:", error)
@@ -260,7 +307,7 @@ export function useTracker() {
         adjustments: adjustText,
         user_id: userId,
       },
-      { onConflict: "week_start_date" } // This prevents duplicates!
+      { onConflict: "user_id,week_start_date" } // One review per user per week
     )
 
     if (!error) {
@@ -333,7 +380,7 @@ export function useTracker() {
       .from("journals")
       .upsert(
         { entry_date: dateStr, content: content, user_id: userId },
-        { onConflict: "entry_date" }
+        { onConflict: "user_id,entry_date" }
       )
       .select()
       .single()
@@ -846,6 +893,8 @@ export function useTracker() {
     IconMap,
     habits,
     logs,
+    miniLogs,
+    habitUpgradeNeeded,
     currentWeekStart,
     isLoading,
     toggleHabit,
