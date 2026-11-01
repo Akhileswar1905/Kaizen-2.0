@@ -10,6 +10,17 @@ export type LearningChecklistItem = {
   description: string
   is_completed: boolean
   sort_order: number
+  subtasks: LearningSubtask[]
+}
+export type LearningSubtask = {
+  id: string
+  item_id: string
+  user_id: string
+  title: string
+  is_completed: boolean
+  sort_order: number
+  created_at?: string
+  updated_at?: string
 }
 export type NewLearningChecklistItem = { category: string; title: string; description?: string; is_completed?: boolean; sort_order?: number }
 type NewItem = NewLearningChecklistItem
@@ -26,8 +37,20 @@ export function useLearningChecklist() {
     setIsLoading(true); setErrorMessage(null)
     const { data, error } = await supabase.from("learning_checklist_items").select("*").eq("user_id", user.id).order("sort_order").order("created_at")
     if (error) { setErrorMessage(error.message); setIsLoading(false); return }
-    // New users start with an empty checklist and build their own tracks.
-    setItems((data ?? []) as LearningChecklistItem[]); setIsLoading(false)
+    const rows = (data ?? []) as Omit<LearningChecklistItem, "subtasks">[]
+    const { data: subtaskRows, error: subtaskError } = await supabase
+      .from("learning_checklist_subtasks")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("sort_order")
+      .order("created_at")
+    if (subtaskError) { setErrorMessage(subtaskError.message); setIsLoading(false); return }
+    const subtasks = (subtaskRows ?? []) as LearningSubtask[]
+    setItems(rows.map(item => ({
+      ...item,
+      subtasks: subtasks.filter(subtask => subtask.item_id === item.id),
+    })))
+    setIsLoading(false)
   }, [user?.id])
   useEffect(() => { void loadItems() }, [loadItems])
 
