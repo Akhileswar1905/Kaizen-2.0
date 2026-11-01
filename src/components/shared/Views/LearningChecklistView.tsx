@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { BookOpen, CheckCircle2, Circle, GraduationCap, Layers3, Loader2, Pencil, Plus, Search, Sparkles, Target, Trash2 } from "lucide-react"
+import { BookOpen, CheckCircle2, Circle, GraduationCap, Layers3, Loader2, Pencil, Plus, Search, Sparkles, Target, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -10,7 +10,7 @@ import { useLearningChecklist, type LearningChecklistItem } from "@/hooks/useLea
 
 type Filter = "all" | "pending" | "completed"
 export function LearningChecklistView() {
-  const { items, categories, isLoading, errorMessage, createItem, updateItem, deleteItem, addCategory } = useLearningChecklist()
+  const { items, categories, isLoading, errorMessage, createItem, updateItem, deleteItem, createSubtask, updateSubtask, deleteSubtask, addCategory } = useLearningChecklist()
   const [selected, setSelected] = useState("All")
   const [filter, setFilter] = useState<Filter>("all")
   const [search, setSearch] = useState("")
@@ -24,6 +24,8 @@ export function LearningChecklistView() {
   const [newCategory, setNewCategory] = useState("")
   const [saving, setSaving] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [subtaskDrafts, setSubtaskDrafts] = useState<Record<string, string>>({})
+  const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({})
   const completed = items.filter(item => item.is_completed).length
   const progress = items.length ? Math.round(completed / items.length * 100) : 0
   const visible = useMemo(() => items.filter(item =>
@@ -138,7 +140,15 @@ export function LearningChecklistView() {
             <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-5 sm:px-5"><div className="flex items-center gap-2"><span className={cn("learning-group-dot",`learning-group-dot--${catIndex % 5}`)} /><h3 className="text-sm font-bold">{cat}</h3><span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">{done}/{section.length}</span></div><Button size="sm" variant="ghost" className="h-8 rounded-lg gap-1 text-xs font-bold" onClick={() => openCreate(cat)}><Plus className="h-3.5 w-3.5" /> Add to track</Button></div>
             <div className="space-y-2 px-3 pb-4 sm:px-4">{section.map((item,index) => <article key={item.id} className={cn("learning-task-row group",item.is_completed && "is-complete")}>
               <button type="button" onClick={async () => { const result = await updateItem(item.id,{is_completed:!item.is_completed}); if(result.error) setActionError(result.error); else setActionError(null) }} className="learning-task-check" aria-label={item.is_completed ? "Mark incomplete" : "Mark complete"}>{item.is_completed ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />}</button>
-              <button type="button" onClick={() => openEdit(item)} className="min-w-0 flex-1 text-left"><span className="block text-sm font-bold leading-snug sm:text-[15px]">{item.title}</span>{item.description && <span className="mt-1 block whitespace-pre-wrap text-xs font-semibold leading-relaxed text-muted-foreground">{item.description}</span>}</button>
+              <div className="min-w-0 flex-1">
+                <button type="button" onClick={() => openEdit(item)} className="w-full text-left"><span className="block text-sm font-bold leading-snug sm:text-[15px]">{item.title}</span>{item.description && <span className="mt-1 block whitespace-pre-wrap text-xs font-semibold leading-relaxed text-muted-foreground">{item.description}</span>}</button>
+                {(item.subtasks?.length ?? 0) > 0 && <div className="mt-2 flex items-center gap-2"><span className="text-[11px] font-semibold text-muted-foreground">{item.subtasks?.filter(subtask => subtask.is_completed).length}/{item.subtasks?.length} subtasks</span><button type="button" onClick={() => setExpandedTasks(prev => ({...prev,[item.id]:!prev[item.id]}))} className="text-[11px] font-bold text-primary">{expandedTasks[item.id] ? "Hide" : "Show"}</button></div>}
+                {expandedTasks[item.id] && <div className="mt-2 space-y-1.5 border-l-2 border-border/70 pl-3">{(item.subtasks ?? []).map(subtask => <div key={subtask.id} className="flex items-center gap-2"><button type="button" onClick={async () => { const result = await updateSubtask(item.id,subtask.id,{is_completed:!subtask.is_completed}); if(result.error) setActionError(result.error) }} className="text-muted-foreground hover:text-primary" aria-label={subtask.is_completed ? "Mark subtask incomplete" : "Complete subtask"}>{subtask.is_completed ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> : <Circle className="h-3.5 w-3.5" />}</button><span className={cn("min-w-0 flex-1 text-xs font-semibold",subtask.is_completed && "text-muted-foreground line-through")}>{subtask.title}</span><button type="button" onClick={async () => { const result = await deleteSubtask(item.id,subtask.id); if(result.error) setActionError(result.error) }} className="rounded p-1 text-muted-foreground hover:text-destructive" aria-label="Delete subtask"><X className="h-3 w-3" /></button></div>)}</div>}
+                <form onSubmit={async event => { event.preventDefault(); const draft = subtaskDrafts[item.id] ?? ""; const result = await createSubtask(item.id,draft); if(result.error) setActionError(result.error); else { setSubtaskDrafts(prev => ({...prev,[item.id]:""})); setExpandedTasks(prev => ({...prev,[item.id]:true})); setActionError(null) } }} className="mt-2 flex max-w-md items-center gap-2">
+                  <Input value={subtaskDrafts[item.id] ?? ""} onChange={event => setSubtaskDrafts(prev => ({...prev,[item.id]:event.target.value}))} placeholder="Add a subtask…" aria-label={`Add subtask to ${item.title}`} className="h-8 rounded-lg bg-background/60 text-xs" />
+                  <Button type="submit" size="sm" variant="ghost" disabled={!(subtaskDrafts[item.id] ?? "").trim()} className="h-8 shrink-0 rounded-lg px-2 text-xs"><Plus className="mr-1 h-3 w-3" /> Add</Button>
+                </form>
+              </div>
               <span className="hidden shrink-0 text-[10px] font-bold text-muted-foreground/60 sm:block">{String(index+1).padStart(2,"0")}</span>
               <div className="flex shrink-0 gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"><Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => openEdit(item)} aria-label="Edit task"><Pencil className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive" onClick={() => {setDeleting(item);setActionError(null)}} aria-label="Delete task"><Trash2 className="h-3.5 w-3.5" /></Button></div>
             </article>)}</div>
