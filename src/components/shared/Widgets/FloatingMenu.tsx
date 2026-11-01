@@ -109,7 +109,7 @@ export function FloatingMenu({
       onClick={() => navigate(item.action)}
       className={cn(
         "shrink-0 rounded-xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary",
-        compact ? "h-11 w-11" : "h-10 w-10 sm:h-12 sm:w-12",
+        compact ? "h-10 w-10" : "h-10 w-10 sm:h-12 sm:w-12",
         "focus-visible:ring-2 focus-visible:ring-primary",
         activeView === item.view
           ? "is-active bg-foreground/10 text-foreground shadow-sm ring-1 ring-foreground/10 hover:bg-foreground/10 hover:text-foreground"
@@ -139,7 +139,7 @@ export function FloatingMenu({
         </>
       )}
 
-      <div className="kaizen-dock pointer-events-auto flex w-full max-w-[min(100%,28rem)] items-center justify-around gap-1 rounded-2xl p-1.5 shadow-xl sm:hidden">
+      <div className="kaizen-dock pointer-events-auto flex w-full max-w-[min(100%,28rem)] items-center justify-center gap-0.5 rounded-2xl p-1 shadow-xl sm:hidden">
         {mobilePrimary.map((item) => renderIconButton(item, true))}
         <Button
           variant="ghost"
@@ -149,7 +149,7 @@ export function FloatingMenu({
           aria-expanded={moreOpen}
           onClick={() => setMoreOpen((open) => !open)}
           className={cn(
-            "h-11 w-11 shrink-0 rounded-xl text-muted-foreground hover:bg-primary/10 hover:text-primary",
+            "h-10 w-10 shrink-0 rounded-xl text-muted-foreground hover:bg-primary/10 hover:text-primary",
             moreOpen || moreIsActive
               ? "bg-foreground/10 text-foreground ring-1 ring-foreground/10"
               : ""
