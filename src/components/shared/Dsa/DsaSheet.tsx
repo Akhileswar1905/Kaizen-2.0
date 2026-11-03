@@ -77,12 +77,10 @@ export function DsaSheet() {
       <div className="dsa-header flex flex-col gap-4 border-b border-border/40 pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="flex items-center gap-2 text-2xl font-black tracking-tight text-foreground md:text-3xl">
-              <Code2 className="h-7 w-7 text-primary" /> DSA Sheet
-            </h1>
-            <p className="text-xs font-medium text-muted-foreground">
-              Master industrial system algorithms step-by-step
-            </p>
+            <div className="flex items-center gap-3"><div className="kaizen-page-heading-icon"><Code2 /></div><div><h1 className="kaizen-page-heading-title">DSA Sheet</h1>
+            <p className="kaizen-page-heading-description">
+              Build problem-solving skills through structured practice.
+            </p></div></div>
           </div>
         </div>
 
