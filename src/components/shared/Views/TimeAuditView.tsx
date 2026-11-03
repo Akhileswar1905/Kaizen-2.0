@@ -192,14 +192,10 @@ export function TimeAuditView({ onBack }: { onBack: () => void }) {
           </Button>
           <div className="space-y-1">
             <h1 className="flex items-center gap-2.5 text-2xl font-extrabold tracking-tight sm:text-3xl">
-              <div className="rounded-xl bg-primary/10 p-2 text-primary">
-                <Grid2x2 className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />
-              </div>
-              <span className="bg-linear-to-r from-foreground via-foreground/90 to-muted-foreground bg-clip-text text-transparent">
-                Time Audit
-              </span>
+              <div className="kaizen-page-heading-icon"><Grid2x2 /></div>
+              <span className="kaizen-page-heading-title">Time Audit</span>
             </h1>
-            <p className="text-xs font-medium text-muted-foreground/80 sm:text-sm">
+            <p className="kaizen-page-heading-description">
               Log every 30 minutes, tag it, and see where your day really goes
             </p>
           </div>
