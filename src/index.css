@@ -1042,3 +1042,31 @@ h1,h2,h3,h4,h5,h6 { font-weight:700; letter-spacing:-0.015em; }
     font-size: 1.45rem;
   }
 }
+
+
+/* Apply the shared heading treatment to page headers regardless of each
+   workspace's internal content wrapper depth. Dashboard is not wrapped in kaizen-page. */
+.kaizen-page header:not([data-radix-collection-item]) {
+  border-color: color-mix(in oklch, var(--border) 82%, transparent);
+}
+.kaizen-page header h1 {
+  color: var(--foreground);
+  font-size: clamp(1.45rem, 2.4vw, 1.85rem);
+  line-height: 1.2;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+.kaizen-page header p {
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+.kaizen-page header [class*="rounded-xl"][class*="bg-"] {
+  border: 1px solid color-mix(in oklch, var(--border) 78%, transparent);
+  background: color-mix(in oklch, var(--primary) 8%, var(--card));
+  color: var(--primary);
+}
+@media (max-width: 640px) {
+  .kaizen-page header h1 { font-size: 1.45rem; }
+}
