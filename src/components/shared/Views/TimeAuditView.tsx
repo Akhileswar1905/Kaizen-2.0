@@ -190,14 +190,14 @@ export function TimeAuditView({ onBack }: { onBack: () => void }) {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="space-y-1">
-            <h1 className="flex items-center gap-2.5 text-2xl font-extrabold tracking-tight sm:text-3xl">
-              <div className="kaizen-page-heading-icon"><Grid2x2 /></div>
-              <span className="kaizen-page-heading-title">Time Audit</span>
-            </h1>
-            <p className="kaizen-page-heading-description">
-              Log every 30 minutes, tag it, and see where your day really goes
-            </p>
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="kaizen-page-heading-icon"><Grid2x2 /></div>
+            <div className="min-w-0">
+              <h1 className="kaizen-page-heading-title">Time Audit</h1>
+              <p className="kaizen-page-heading-description">
+                Log every 30 minutes, tag it, and see where your day really goes
+              </p>
+            </div>
           </div>
         </div>
 
