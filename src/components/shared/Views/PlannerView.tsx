@@ -189,15 +189,7 @@ export function PlannerView() {
         {/* Header Section */}
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">PERSONAL WORKSPACE</p>
-              <h1 className="mt-1 flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
-                <ListTodo className="h-6 w-6 text-muted-foreground" /> Task planner
-              </h1>
-              <p className="mt-1 text-sm font-semibold text-muted-foreground">
-                Make room for focused work, one day at a time.
-              </p>
-            </div>
+            <div className="flex min-w-0 items-center gap-3"><div className="kaizen-page-heading-icon"><ListTodo /></div><div><h1 className="kaizen-page-heading-title">Task Planner</h1><p className="kaizen-page-heading-description">Make room for focused work, one day at a time.</p></div></div>
           </div>
 
           {/* View Toggle */}
