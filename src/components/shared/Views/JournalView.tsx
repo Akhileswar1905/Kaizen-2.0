@@ -54,14 +54,10 @@ export function JournalView({ onBack }: { onBack: () => void }) {
           </Button>
           <div className="space-y-1">
             <h1 className="flex items-center gap-2.5 text-2xl font-extrabold tracking-tight sm:text-3xl">
-              <div className="rounded-xl bg-primary/10 p-2 text-primary">
-                <BookOpen className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />
-              </div>
-              <span className="bg-linear-to-r from-foreground via-foreground/90 to-muted-foreground bg-clip-text text-transparent">
-                Daily Journal
-              </span>
+              <div className="kaizen-page-heading-icon"><BookOpen /></div>
+              <span className="kaizen-page-heading-title">Daily Journal</span>
             </h1>
-            <p className="text-xs font-medium text-muted-foreground/80 sm:text-sm">
+            <p className="kaizen-page-heading-description">
               Clear mental clutter and log architectural adjustments
             </p>
           </div>
