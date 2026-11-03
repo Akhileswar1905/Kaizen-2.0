@@ -997,76 +997,9 @@ h1,h2,h3,h4,h5,h6 { font-weight:700; letter-spacing:-0.015em; }
 .kaizen-editor .ProseMirror .is-empty::before { content: attr(data-placeholder); float: left; height: 0; pointer-events: none; color: var(--muted-foreground); opacity: 0.65; }
 
 
-/* Consistent page-heading language across non-dashboard workspaces.
-   Preserve each page's own header layout and actions; unify only its visual treatment. */
-.kaizen-page > * > header,
-.kaizen-page > * > .dsa-header {
-  min-height: 4.25rem;
-  padding-bottom: 1.15rem;
-  border-color: color-mix(in oklch, var(--border) 82%, transparent) !important;
-  gap: 1rem;
-}
-.kaizen-page > * > header h1,
-.kaizen-page > * > .dsa-header h1 {
-  color: var(--foreground);
-  font-size: clamp(1.45rem, 2.4vw, 1.85rem);
-  line-height: 1.2;
-  font-weight: 750;
-  letter-spacing: -0.035em;
-}
-.kaizen-page > * > header p,
-.kaizen-page > * > .dsa-header p {
-  color: var(--muted-foreground);
-  font-size: 0.82rem;
-  line-height: 1.5;
-  font-weight: 500;
-}
-.kaizen-page > * > header [class*="rounded-xl"][class*="bg-"],
-.kaizen-page > * > .dsa-header [class*="rounded-xl"][class*="bg-"] {
-  border: 1px solid color-mix(in oklch, var(--border) 78%, transparent);
-  background: color-mix(in oklch, var(--primary) 8%, var(--card));
-  color: var(--primary);
-}
-.kaizen-page > * > header > div:first-child,
-.kaizen-page > * > .dsa-header > div:first-child {
-  min-width: 0;
-}
-@media (max-width: 640px) {
-  .kaizen-page > * > header,
-  .kaizen-page > * > .dsa-header {
-    padding-bottom: 1rem;
-    margin-bottom: 0.25rem;
-  }
-  .kaizen-page > * > header h1,
-  .kaizen-page > * > .dsa-header h1 {
-    font-size: 1.45rem;
-  }
-}
 
-
-/* Apply the shared heading treatment to page headers regardless of each
-   workspace's internal content wrapper depth. Dashboard is not wrapped in kaizen-page. */
-.kaizen-page header:not([data-radix-collection-item]) {
-  border-color: color-mix(in oklch, var(--border) 82%, transparent);
-}
-.kaizen-page header h1 {
-  color: var(--foreground);
-  font-size: clamp(1.45rem, 2.4vw, 1.85rem);
-  line-height: 1.2;
-  font-weight: 750;
-  letter-spacing: -0.035em;
-}
-.kaizen-page header p {
-  color: var(--muted-foreground);
-  font-size: 0.82rem;
-  line-height: 1.5;
-  font-weight: 500;
-}
-.kaizen-page header [class*="rounded-xl"][class*="bg-"] {
-  border: 1px solid color-mix(in oklch, var(--border) 78%, transparent);
-  background: color-mix(in oklch, var(--primary) 8%, var(--card));
-  color: var(--primary);
-}
-@media (max-width: 640px) {
-  .kaizen-page header h1 { font-size: 1.45rem; }
-}
+/* Shared visual language for page identity headers (Dashboard intentionally excluded). */
+.kaizen-page-heading-icon{display:flex;width:2.75rem;height:2.75rem;flex:0 0 2.75rem;align-items:center;justify-content:center;border:1px solid color-mix(in oklch,var(--primary) 14%,var(--border));border-radius:.875rem;background:color-mix(in oklch,var(--primary) 8%,var(--card));color:var(--primary)}
+.kaizen-page-heading-icon svg{width:1.25rem;height:1.25rem}
+.kaizen-page-heading-title{color:var(--foreground);font-size:clamp(1.4rem,2.2vw,1.75rem);font-weight:750;line-height:1.2;letter-spacing:-.035em}
+.kaizen-page-heading-description{margin-top:.3rem;color:var(--muted-foreground);font-size:.8125rem;font-weight:500;line-height:1.5}
