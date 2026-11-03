@@ -112,16 +112,16 @@ export function SharedPageView() {
       >
         <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border/60 pb-4">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
+            <div className="kaizen-page-heading-icon">
               {createElement(resolveIcon(page.icon_name), {
                 className: "h-5 w-5",
               })}
             </div>
             <div className="min-w-0">
-              <h1 className="truncate text-2xl font-extrabold tracking-tight sm:text-3xl">
+              <h1 className="kaizen-page-heading-title truncate">
                 {page.title}
               </h1>
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="kaizen-page-heading-description">
                 Shared {customPageKindLabel(page.kind).toLowerCase()} · updated{" "}
                 {format(parseISO(page.updated_at), "d MMM yyyy")}
               </p>

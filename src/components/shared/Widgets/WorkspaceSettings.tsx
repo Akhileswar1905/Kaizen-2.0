@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTheme } from "@/components/theme-provider"
 import * as Icons from "lucide-react"
 import {
   ArrowDown,
@@ -8,6 +9,9 @@ import {
   Pencil,
   Plus,
   Trash2,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -56,6 +60,7 @@ export function WorkspaceSettings({
   initialTab = "pages",
 }: WorkspaceSettingsProps) {
   const [tab, setTab] = useState<SettingsTab>(initialTab)
+  const { theme, setTheme } = useTheme()
   const {
     pages,
     customPages,
@@ -432,8 +437,33 @@ export function WorkspaceSettings({
               </section>
             </TabsContent>
 
-            <TabsContent value="general" className="mt-4">
-              <section className="grid gap-2">
+            <TabsContent value="general" className="mt-4 space-y-6">
+              <section className="space-y-3">
+                <div>
+                  <h3 className="text-sm font-bold">Appearance</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">Choose how Kaizen looks on this device.</p>
+                </div>
+                <div className="grid grid-cols-3 gap-2" role="group" aria-label="Theme">
+                  {([
+                    { value: "light", label: "Light", Icon: Sun },
+                    { value: "dark", label: "Dark", Icon: Moon },
+                    { value: "system", label: "System", Icon: Monitor },
+                  ] as const).map(({ value, label, Icon }) => (
+                    <Button
+                      key={value}
+                      type="button"
+                      variant={theme === value ? "secondary" : "outline"}
+                      aria-pressed={theme === value}
+                      onClick={() => setTheme(value)}
+                      className={cn("h-auto flex-col gap-2 rounded-xl py-3", theme === value && "border-primary/40 bg-primary/10 text-primary")}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="text-xs">{label}</span>
+                    </Button>
+                  ))}
+                </div>
+              </section>
+              <section className="grid gap-2 border-t border-border/60 pt-5">
                 <Label
                   htmlFor="workspace-currency"
                   className="text-sm font-bold"

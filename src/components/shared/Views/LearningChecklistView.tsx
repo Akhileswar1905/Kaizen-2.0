@@ -73,7 +73,7 @@ export function LearningChecklistView() {
   return <main className="learning-page min-h-screen px-3 py-5 text-foreground sm:px-6 sm:py-8">
     <div className="learning-shell mx-auto max-w-[1440px] space-y-6">
       <header className="flex items-center justify-between gap-3 border-b border-border/60 pb-5">
-        <div className="flex items-center gap-2 text-sm font-bold text-muted-foreground"><GraduationCap className="h-5 w-5 text-primary" /> Learning space</div>
+        <div className="flex min-w-0 items-center gap-3"><div className="kaizen-page-heading-icon"><GraduationCap /></div><div><h1 className="kaizen-page-heading-title">Learning Space</h1><p className="kaizen-page-heading-description">Organise your learning and track your progress.</p></div></div>
         <Button variant="outline" className="rounded-xl border-border/70 bg-card/70 gap-2" onClick={() => { setActionError(null); setCategoryDialog(true) }}><Plus className="h-4 w-4" /> <span className="hidden sm:inline">New category</span><span className="sm:hidden">Category</span></Button>
       </header>
 

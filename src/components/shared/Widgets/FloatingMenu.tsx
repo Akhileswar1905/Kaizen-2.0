@@ -139,7 +139,7 @@ export function FloatingMenu({
         </>
       )}
 
-      <div className="kaizen-dock pointer-events-auto flex w-full max-w-[min(100%,28rem)] items-center justify-center gap-0.5 rounded-2xl p-1 shadow-xl sm:hidden">
+      <div className="kaizen-dock pointer-events-auto flex w-fit max-w-[calc(100vw-1.5rem)] items-center justify-center gap-1 rounded-2xl p-1.5 shadow-xl sm:hidden">
         {mobilePrimary.map((item) => renderIconButton(item, true))}
         <Button
           variant="ghost"

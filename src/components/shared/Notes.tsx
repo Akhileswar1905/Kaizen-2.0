@@ -540,14 +540,14 @@ export function NotesTracker() {
         {/* Header */}
         <header className="flex shrink-0 items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-            <div className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:flex">
+            <div className="kaizen-page-heading-icon">
               <PenTool className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="truncate text-xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+              <h1 className="kaizen-page-heading-title truncate">
                 Study Notes
               </h1>
-              <p className="mt-0.5 hidden text-sm font-medium text-muted-foreground sm:block">
+              <p className="kaizen-page-heading-description">
                 Organize, edit, and review your study materials.
               </p>
             </div>

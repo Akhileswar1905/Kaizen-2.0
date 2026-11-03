@@ -323,7 +323,7 @@ export function CustomPageView({
       >
         <header className="flex items-start justify-between gap-3 border-b border-border/60 pb-4">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
+            <div className="kaizen-page-heading-icon">
               {createElement(resolveIcon(page.icon_name), {
                 className: "h-5 w-5",
               })}
@@ -338,10 +338,10 @@ export function CustomPageView({
                 }
                 maxLength={60}
                 aria-label="Page title"
-                className="w-full truncate rounded-md bg-transparent text-2xl font-extrabold tracking-tight outline-none focus:bg-muted/40 sm:text-3xl"
+                className="kaizen-page-heading-title w-full truncate rounded-md bg-transparent outline-none focus:bg-muted/40"
               />
-              <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                <span>{customPageKindLabel(page.kind)}</span>
+              <div className="kaizen-page-heading-description flex flex-wrap items-center gap-2">
+                <span>{customPageKindLabel(page.kind)} workspace</span>
                 <span aria-hidden>·</span>
                 <SaveIndicator
                   status={titleError ? "error" : status}
