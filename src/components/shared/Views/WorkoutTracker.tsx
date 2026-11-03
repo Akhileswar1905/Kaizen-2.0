@@ -758,14 +758,10 @@ export function WorkoutTracker({ onBack }: WorkoutTrackerProps) {
             >
               <ChevronLeft className="h-4 w-4 text-muted-foreground" />
             </Button>
-            <div>
-              <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground">
-                <Dumbbell className="h-5 w-5 text-foreground/80" />
-                Physical Conditioning
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                Hypertrophy Protocol & Strength Matrix
-              </p>
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="kaizen-page-heading-icon"><Dumbbell /></div>
+              <div><h1 className="kaizen-page-heading-title">Physical Conditioning</h1>
+              <p className="kaizen-page-heading-description">Hypertrophy protocol and strength tracking.</p></div>
             </div>
           </div>
 
