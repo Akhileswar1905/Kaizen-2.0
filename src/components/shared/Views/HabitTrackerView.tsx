@@ -65,11 +65,7 @@ export function HabitTrackerView(props: HabitTrackerViewProps) {
       <main className="habit-tracker-page w-full space-y-6 text-foreground antialiased">
         <div className="habit-tracker-content mx-auto w-full max-w-[1440px] space-y-7">
             <header className="flex flex-col gap-4 border-b border-border/60 pb-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs font-bold tracking-[0.16em] text-muted-foreground">HABIT TRACKER</p>
-                <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">Build your rhythm.</h1>
-                <p className="mt-1 text-sm text-muted-foreground">1% better every day. Small votes add up to who you become.</p>
-              </div>
+              <div className="flex min-w-0 items-center gap-3"><div className="kaizen-page-heading-icon"><Activity /></div><div><h1 className="kaizen-page-heading-title">Habit Tracker</h1><p className="kaizen-page-heading-description">Build consistent routines, one small action at a time.</p></div></div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="mr-1 text-sm font-semibold text-muted-foreground">{format(new Date(), "EEEE, d MMMM")}</span>
                 <Button variant="outline" size="icon" onClick={onOpenStatus} className="h-9 w-9 rounded-xl" title="Your status"><UserCircle className="h-4 w-4" /></Button>
