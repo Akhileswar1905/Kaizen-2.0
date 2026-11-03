@@ -118,11 +118,15 @@ export function SystemDesignHub({ onBack }: SystemDesignHubProps) {
               >
                 <ChevronLeft className="h-4 w-4 text-muted-foreground" />
               </Button>
-              <div>
-                <div className="flex items-center gap-3"><div className="kaizen-page-heading-icon"><Layers /></div><div><h1 className="kaizen-page-heading-title">System Design Architecture</h1>
-                <p className="kaizen-page-heading-description">
-                  Continuous mastery of large-scale foundations
-                </p></div></div>
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="kaizen-page-heading-icon"><Layers /></div>
+                <div className="min-w-0">
+                  <h1 className="kaizen-page-heading-title">System Design Architecture</h1>
+                  <p className="kaizen-page-heading-description">
+                    Continuous mastery of large-scale foundations
+                  </p>
+                </div>
+              </div>
             </div>
           </header>
 
