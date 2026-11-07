@@ -142,7 +142,7 @@ function NoteContentPreview({ html }: { html: string }) {
 
     const renderDiagrams = async () => {
       const blocks = Array.from(container.querySelectorAll("pre > code"))
-        .filter((code) => code.textContent?.startsWith("%%mermaid\\n"))
+        .filter((code) => code.textContent?.startsWith("%%mermaid\n"))
 
       if (blocks.length === 0) return
 
@@ -158,7 +158,7 @@ function NoteContentPreview({ html }: { html: string }) {
 
         for (const [index, code] of blocks.entries()) {
           if (cancelled) return
-          const source = (code.textContent ?? "").replace(/^%%mermaid\\n/, "").trim()
+          const source = (code.textContent ?? "").replace(/^%%mermaid\n/, "").trim()
           const pre = code.parentElement
           if (!pre || !source) continue
 
@@ -189,7 +189,7 @@ function NoteContentPreview({ html }: { html: string }) {
       } catch {
         if (!cancelled) {
           container.querySelectorAll("pre > code").forEach((code) => {
-            if (code.textContent?.startsWith("%%mermaid\\n")) {
+            if (code.textContent?.startsWith("%%mermaid\n")) {
               const note = document.createElement("p")
               note.className = "note-mermaid-error"
               note.textContent = "Mermaid could not be loaded. Check your connection and reopen this note."
