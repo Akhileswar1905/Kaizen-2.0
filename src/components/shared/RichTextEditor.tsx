@@ -219,7 +219,7 @@ export function RichTextEditor({
               content: [
                 {
                   type: "text",
-                  text: "%%mermaid\\nflowchart TD\\n  A[Start] --> B[End]",
+                  text: "%%mermaid\nflowchart TD\n  A[Start] --> B[End]",
                 },
               ],
             }).run()
