@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
@@ -128,6 +128,85 @@ function toSnippet(html: string): string {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 140)
+}
+
+
+/** Renders editable Mermaid source blocks as diagrams in the saved-note preview. */
+function NoteContentPreview({ html }: { html: string }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    let cancelled = false
+
+    const renderDiagrams = async () => {
+      const blocks = Array.from(container.querySelectorAll("pre > code"))
+        .filter((code) => code.textContent?.startsWith("%%mermaid\n"))
+
+      if (blocks.length === 0) return
+
+      try {
+        const { default: mermaid } = await import("mermaid")
+        if (cancelled) return
+
+        mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: "strict",
+          theme: "neutral",
+        })
+
+        for (const [index, code] of blocks.entries()) {
+          if (cancelled) return
+          const source = (code.textContent ?? "").replace(/^%%mermaid\n/, "").trim()
+          const pre = code.parentElement
+          if (!pre || !source) continue
+
+          try {
+            const { svg, bindFunctions } = await mermaid.render(
+              `kaizen-mermaid-${Date.now()}-${index}`,
+              source
+            )
+            if (cancelled) return
+
+            const diagram = document.createElement("div")
+            diagram.className = "note-mermaid-diagram"
+            diagram.setAttribute("role", "img")
+            diagram.setAttribute("aria-label", "Mermaid diagram")
+            diagram.innerHTML = svg
+            pre.replaceWith(diagram)
+            bindFunctions?.(diagram)
+          } catch (error) {
+            const message = error instanceof Error
+              ? error.message
+              : "Unable to render this diagram."
+            const fallback = document.createElement("p")
+            fallback.className = "note-mermaid-error"
+            fallback.textContent = `Diagram could not be rendered: ${message}`
+            pre.replaceWith(fallback)
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          container.querySelectorAll("pre > code").forEach((code) => {
+            if (code.textContent?.startsWith("%%mermaid\n")) {
+              const note = document.createElement("p")
+              note.className = "note-mermaid-error"
+              note.textContent = "Mermaid could not be loaded. Check your connection and reopen this note."
+              code.parentElement?.replaceWith(note)
+            }
+          })
+        }
+      }
+    }
+
+    void renderDiagrams()
+    return () => {
+      cancelled = true
+    }
+  }, [html])
+
+  return <div ref={containerRef} dangerouslySetInnerHTML={{ __html: html }} />
 }
 
 interface NameFormProps {
@@ -1061,11 +1140,7 @@ export function NotesTracker() {
                               {selectedNote.title}
                             </h2>
                             <div className="note-preview pb-20 text-[15px] leading-relaxed text-foreground">
-                              <div
-                                dangerouslySetInnerHTML={{
-                                  __html: selectedNote.content,
-                                }}
-                              />
+                              <NoteContentPreview html={selectedNote.content} />
                             </div>
                           </>
                         )}
@@ -1120,6 +1195,18 @@ export function NotesTracker() {
         .note-preview pre code { background: transparent; padding: 0; }
         .note-preview img { max-width: 100%; border-radius: 10px; }
         .note-preview hr { border: 0; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+        .note-preview table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; table-layout: auto; }
+        .note-preview th, .note-preview td { min-width: 6rem; border: 1px solid var(--border); padding: 0.65rem 0.75rem; text-align: left; vertical-align: top; }
+        .note-preview th { background: var(--muted); color: var(--foreground); font-weight: 650; }
+        .note-preview tr:nth-child(even) td { background: color-mix(in oklch, var(--muted) 35%, transparent); }
+        .note-preview th p, .note-preview td p { margin: 0; }
+        .note-preview { overflow-wrap: anywhere; }
+        .note-mermaid-diagram { width: 100%; margin: 1.25rem 0; overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--card); padding: 1rem; }
+        .note-mermaid-diagram svg { display: block; max-width: 100%; height: auto; margin-inline: auto; }
+        .note-mermaid-error { margin: 1rem 0; border: 1px solid var(--destructive); border-radius: 8px; padding: 0.75rem; color: var(--destructive); font-size: 0.85rem; }
+        @media (max-width: 640px) {
+          .note-preview table { display: block; max-width: 100%; overflow-x: auto; white-space: nowrap; }
+        }
       `}</style>
     </div>
   )
