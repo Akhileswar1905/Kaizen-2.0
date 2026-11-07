@@ -21,6 +21,7 @@ import {
   Rows3,
   Columns3,
   Trash2,
+  Workflow,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -205,6 +206,28 @@ export function RichTextEditor({
         >
           <TableIcon className="h-4 w-4" />
           <span>Insert table</span>
+        </Button>
+
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1.5 px-2.5 text-xs"
+          onClick={() =>
+            editor.chain().focus().insertContent({
+              type: "codeBlock",
+              content: [
+                {
+                  type: "text",
+                  text: "%%mermaid\\nflowchart TD\\n  A[Start] --> B[End]",
+                },
+              ],
+            }).run()
+          }
+          title="Insert an editable Mermaid diagram block"
+        >
+          <Workflow className="h-4 w-4" />
+          <span>Diagram</span>
         </Button>
 
         {editor.isActive("table") && (
