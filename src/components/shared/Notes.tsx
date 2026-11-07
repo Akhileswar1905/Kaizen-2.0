@@ -1120,6 +1120,15 @@ export function NotesTracker() {
         .note-preview pre code { background: transparent; padding: 0; }
         .note-preview img { max-width: 100%; border-radius: 10px; }
         .note-preview hr { border: 0; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+        .note-preview table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; table-layout: auto; }
+        .note-preview th, .note-preview td { min-width: 6rem; border: 1px solid var(--border); padding: 0.65rem 0.75rem; text-align: left; vertical-align: top; }
+        .note-preview th { background: var(--muted); color: var(--foreground); font-weight: 650; }
+        .note-preview tr:nth-child(even) td { background: color-mix(in oklch, var(--muted) 35%, transparent); }
+        .note-preview th p, .note-preview td p { margin: 0; }
+        .note-preview { overflow-wrap: anywhere; }
+        @media (max-width: 640px) {
+          .note-preview table { display: block; max-width: 100%; overflow-x: auto; white-space: nowrap; }
+        }
       `}</style>
     </div>
   )
