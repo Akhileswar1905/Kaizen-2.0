@@ -38,6 +38,7 @@ import {
   LEAD_OPTIONS,
   REPEAT_LABELS,
   getRepeatLabel,
+  type CalendarReminderRepeat,
   nextOccurrence,
   type ReminderRepeat,
 } from "@/lib/notifications"
