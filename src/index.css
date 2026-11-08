@@ -1010,3 +1010,15 @@ h1,h2,h3,h4,h5,h6 { font-weight:700; letter-spacing:-0.015em; }
 @media (max-width: 640px) {
   .kaizen-page--habits { padding-bottom: 6rem !important; }
 }
+
+
+/* Make bold formatting clearly distinguishable in Notes without changing the app-wide type scale. */
+.note-preview strong,
+.note-preview b,
+.note-editor .ProseMirror strong,
+.note-editor .ProseMirror b {
+  color: var(--foreground);
+  font-weight: 800 !important;
+  letter-spacing: -0.012em;
+  text-shadow: 0 0 0.01px currentColor;
+}
