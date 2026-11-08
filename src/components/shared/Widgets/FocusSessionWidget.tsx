@@ -5,6 +5,34 @@ import type { DashboardWidget } from "@/lib/workspace"
 
 type SessionStatus = "idle" | "running" | "paused" | "finished"
 type SessionMode = "focus" | "break"
+type PersistedSession = {
+  mode: SessionMode
+  status: SessionStatus
+  remaining: number
+  deadline: number | null
+  alarmDismissed: boolean
+}
+
+const SESSION_STORAGE_KEY = "kaizen-focus-session-v1"
+let sharedAudioContext: AudioContext | null = null
+
+function readSession(focusSeconds: number): PersistedSession {
+  const fallback: PersistedSession = { mode: "focus", status: "idle", remaining: focusSeconds, deadline: null, alarmDismissed: false }
+  if (typeof window === "undefined") return fallback
+  try {
+    const raw = window.localStorage.getItem(SESSION_STORAGE_KEY)
+    if (!raw) return fallback
+    const saved = JSON.parse(raw) as PersistedSession
+    if (!saved || !["focus", "break"].includes(saved.mode) || !["idle", "running", "paused", "finished"].includes(saved.status)) return fallback
+    if (saved.status === "running" && saved.deadline) {
+      const remaining = Math.max(0, Math.ceil((saved.deadline - Date.now()) / 1000))
+      return { ...saved, remaining, deadline: remaining === 0 ? null : saved.deadline, status: remaining === 0 ? "finished" : "running" }
+    }
+    return { ...fallback, ...saved, deadline: null }
+  } catch {
+    return fallback
+  }
+}
 
 function formatTime(seconds: number) {
   const minutes = Math.floor(seconds / 60).toString().padStart(2, "0")
@@ -16,11 +44,12 @@ export function FocusSessionWidget({ widget }: { widget: DashboardWidget }) {
   const focusSeconds = Math.max(1, widget.focusMinutes ?? 25) * 60
   const breakSeconds = Math.max(1, widget.breakMinutes ?? 5) * 60
   const alarmEnabled = widget.alarmEnabled ?? true
-  const [mode, setMode] = useState<SessionMode>("focus")
-  const [status, setStatus] = useState<SessionStatus>("idle")
-  const [remaining, setRemaining] = useState(focusSeconds)
-  const [alarmDismissed, setAlarmDismissed] = useState(false)
-  const deadlineRef = useRef<number | null>(null)
+  const [initialSession] = useState(() => readSession(focusSeconds))
+  const [mode, setMode] = useState<SessionMode>(initialSession.mode)
+  const [status, setStatus] = useState<SessionStatus>(initialSession.status)
+  const [remaining, setRemaining] = useState(initialSession.remaining)
+  const [alarmDismissed, setAlarmDismissed] = useState(initialSession.alarmDismissed)
+  const deadlineRef = useRef<number | null>(initialSession.deadline)
   const audioContextRef = useRef<AudioContext | null>(null)
 
   const total = mode === "focus" ? focusSeconds : breakSeconds
@@ -30,11 +59,12 @@ export function FocusSessionWidget({ widget }: { widget: DashboardWidget }) {
     if (typeof window === "undefined") return
     const AudioContextClass = window.AudioContext
     if (!AudioContextClass) return
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContextClass()
+    if (!sharedAudioContext || sharedAudioContext.state === "closed") {
+      sharedAudioContext = new AudioContextClass()
     }
-    if (audioContextRef.current.state === "suspended") {
-      void audioContextRef.current.resume()
+    audioContextRef.current = sharedAudioContext
+    if (sharedAudioContext.state === "suspended") {
+      void sharedAudioContext.resume()
     }
   }
 
@@ -59,6 +89,12 @@ export function FocusSessionWidget({ widget }: { widget: DashboardWidget }) {
   }
 
   useEffect(() => {
+    if (typeof window === "undefined") return
+    const session: PersistedSession = { mode, status, remaining, deadline: deadlineRef.current, alarmDismissed }
+    window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session))
+  }, [mode, status, remaining, alarmDismissed])
+
+  useEffect(() => {
     if (status !== "running") return
     const tick = () => {
       if (deadlineRef.current === null) return
@@ -80,12 +116,6 @@ export function FocusSessionWidget({ widget }: { widget: DashboardWidget }) {
     const interval = window.setInterval(playAlarm, 1800)
     return () => window.clearInterval(interval)
   }, [status, alarmEnabled, alarmDismissed])
-
-  useEffect(() => {
-    return () => {
-      if (audioContextRef.current) void audioContextRef.current.close()
-    }
-  }, [])
 
   const start = () => {
     prepareAudio()
