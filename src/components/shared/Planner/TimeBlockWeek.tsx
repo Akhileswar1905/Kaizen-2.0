@@ -119,7 +119,7 @@ interface DraftBlock {
   date: string
   start: string
   end: string
-  color: BlockColor
+  color: string
 }
 
 interface DragState {
@@ -460,9 +460,10 @@ export function TimeBlockWeek() {
                           onClick={() => openExisting(block)}
                           className={cn(
                             "absolute overflow-hidden rounded-md px-1.5 py-0.5 text-left text-[11px] leading-tight font-semibold shadow-sm ring-1 ring-background/60 transition-[filter] hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                            COLOR_CLASSES[block.color]
+                            COLOR_CLASSES[block.color as BlockColor] ?? "text-white"
                           )}
                           style={{
+                            ...(block.color.startsWith("#") ? { backgroundColor: block.color, color: Number.parseInt(block.color.slice(1), 16) > 0xffffff / 2 ? "#172033" : "#ffffff" } : {}),
                             top,
                             height: height - 1,
                             left: `calc(${(col / cols) * 100}% + 2px)`,
@@ -575,7 +576,7 @@ export function TimeBlockWeek() {
 
               <div className="space-y-2">
                 <Label>Colour</Label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {BLOCK_COLORS.map((color) => (
                     <button
                       key={color}
@@ -592,6 +593,17 @@ export function TimeBlockWeek() {
                       )}
                     />
                   ))}
+                  <label className="relative ml-1 flex h-8 w-8 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-border bg-background shadow-sm transition hover:scale-105" title="Choose a custom colour">
+                    <input
+                      type="color"
+                      aria-label="Choose custom time block colour"
+                      value={draft.color.startsWith("#") ? draft.color : "#2563eb"}
+                      onChange={(e) => setDraft({ ...draft, color: e.target.value })}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    />
+                    <span className="pointer-events-none text-lg leading-none text-foreground">+</span>
+                  </label>
+                  {draft.color.startsWith("#") && <span className="text-xs text-muted-foreground">{draft.color.toUpperCase()}</span>}
                 </div>
               </div>
 

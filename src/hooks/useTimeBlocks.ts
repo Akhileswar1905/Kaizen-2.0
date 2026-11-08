@@ -10,7 +10,7 @@ export const BLOCK_COLORS = [
   "violet",
   "slate",
 ] as const
-export type BlockColor = (typeof BLOCK_COLORS)[number]
+export type BlockColor = string
 
 export interface TimeBlock {
   id: string
@@ -33,8 +33,8 @@ interface BlockRow {
 }
 
 function rowToBlock(row: BlockRow): TimeBlock {
-  const color = BLOCK_COLORS.includes(row.color as BlockColor)
-    ? (row.color as BlockColor)
+  const color = row.color && (/^#[0-9a-fA-F]{6}$/.test(row.color) || BLOCK_COLORS.some((preset) => preset === row.color))
+    ? row.color
     : "blue"
   return {
     id: row.id,
