@@ -221,7 +221,7 @@ function toSnippet(html: string): string {
 
 
 /** Renders editable Mermaid source blocks as diagrams in the saved-note preview. */
-function NoteContentPreview({ html }: { html: string }) {
+export function NoteContentPreview({ html }: { html: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
