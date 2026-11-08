@@ -38,6 +38,12 @@ export const WIDGET_TYPES: {
     description: "Days left until a date",
     icon: "Hourglass",
   },
+  {
+    type: "focus",
+    label: "Focus session",
+    description: "A focus and break timer with an alarm",
+    icon: "Timer",
+  },
 ]
 
 export const RANGE_LABELS: Record<number, string> = {
@@ -73,6 +79,8 @@ export function defaultWidget(
         title: "Something to look forward to",
         date: format(new Date(Date.now() + 14 * 86_400_000), "yyyy-MM-dd"),
       }
+    case "focus":
+      return { type, title: "Focus session", focusMinutes: 25, breakMinutes: 5, alarmEnabled: true }
   }
 }
 
@@ -84,7 +92,7 @@ export function describeWidget(
   const type =
     WIDGET_TYPES.find((item) => item.type === widget.type)?.label ?? "Widget"
   if (widget.type === "note") return `${type} · ${widget.title || "Untitled"}`
-  if (widget.type === "countdown")
+  if (widget.type === "countdown" || widget.type === "focus")
     return `${type} · ${widget.title || "Untitled"}`
   const metricLabel =
     metrics.metric(widget.metric)?.label ?? "Missing data source"

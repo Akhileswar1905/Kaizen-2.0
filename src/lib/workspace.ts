@@ -136,7 +136,7 @@ export type WorkspaceSettings = {
   dashboard: { order: string[]; hidden: string[]; widgets?: DashboardWidget[] }
 }
 
-export type WidgetType = "stat" | "chart" | "meter" | "note" | "countdown"
+export type WidgetType = "stat" | "chart" | "meter" | "note" | "countdown" | "focus"
 
 export type DashboardWidget = {
   id: string
@@ -153,6 +153,12 @@ export type DashboardWidget = {
   text?: string
   /** Countdown date, yyyy-MM-dd. */
   date?: string
+  /** Focus session duration in minutes. */
+  focusMinutes?: number
+  /** Break duration in minutes. */
+  breakMinutes?: number
+  /** Play an alarm when a session ends. */
+  alarmEnabled?: boolean
   /** Spans two columns on wide screens. */
   wide?: boolean
 }

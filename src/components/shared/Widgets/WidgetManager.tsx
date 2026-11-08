@@ -78,7 +78,7 @@ export function WidgetManager() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-6">
           {WIDGET_TYPES.map((option) => {
             const Icon = resolveIcon(option.icon)
             return (
@@ -291,6 +291,52 @@ export function WidgetManager() {
                   onChange={(event) => set({ date: event.target.value })}
                   className="h-9"
                 />
+              </div>
+            )}
+
+            {widget.type === "focus" && (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="focus-minutes" className="text-xs">
+                    Focus (minutes)
+                  </Label>
+                  <Input
+                    id="focus-minutes"
+                    type="number"
+                    min="1"
+                    max="180"
+                    value={widget.focusMinutes ?? 25}
+                    onChange={(event) =>
+                      set({ focusMinutes: Math.min(180, Math.max(1, Number(event.target.value) || 1)) })
+                    }
+                    className="h-9"
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="break-minutes" className="text-xs">
+                    Break (minutes)
+                  </Label>
+                  <Input
+                    id="break-minutes"
+                    type="number"
+                    min="1"
+                    max="60"
+                    value={widget.breakMinutes ?? 5}
+                    onChange={(event) =>
+                      set({ breakMinutes: Math.min(60, Math.max(1, Number(event.target.value) || 1)) })
+                    }
+                    className="h-9"
+                  />
+                </div>
+                <label className="col-span-2 flex cursor-pointer items-center gap-2 text-sm font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={widget.alarmEnabled ?? true}
+                    onChange={(event) => set({ alarmEnabled: event.target.checked })}
+                    className="h-4 w-4 accent-foreground"
+                  />
+                  Play alarm when the session ends
+                </label>
               </div>
             )}
 
