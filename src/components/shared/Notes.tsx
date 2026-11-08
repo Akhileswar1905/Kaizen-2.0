@@ -1276,7 +1276,7 @@ export function NotesTracker() {
                           required
                         />
 
-                        <div className="flex-1 pb-12">
+                        <div className="note-editor flex-1 pb-12">
                           <RichTextEditor
                             value={content}
                             onChange={setContent}
