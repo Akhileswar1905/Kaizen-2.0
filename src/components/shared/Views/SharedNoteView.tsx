@@ -4,7 +4,7 @@ import { format, parseISO } from "date-fns"
 import { Eye, Link2Off, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
-import { NoteContentPreview } from "./Notes"
+import { NoteContentPreview } from "../Notes"
 
 type SharedNote = {
   title: string
