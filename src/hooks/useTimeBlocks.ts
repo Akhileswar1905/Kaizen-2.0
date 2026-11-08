@@ -33,7 +33,7 @@ interface BlockRow {
 }
 
 function rowToBlock(row: BlockRow): TimeBlock {
-  const color = row.color && (/^#[0-9a-fA-F]{6}$/.test(row.color) || BLOCK_COLORS.includes(row.color as BlockColor))
+  const color = row.color && (/^#[0-9a-fA-F]{6}$/.test(row.color) || BLOCK_COLORS.some((preset) => preset === row.color))
     ? row.color
     : "blue"
   return {
