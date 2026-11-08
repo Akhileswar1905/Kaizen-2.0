@@ -22,11 +22,17 @@ import {
   Share2,
   Download,
   X,
+  Globe,
+  Copy,
+  Check,
+  Loader2 as ShareLoader,
 } from "lucide-react"
 import { useWorkspace } from "@/contexts/WorkspaceContext"
 import {
   customViewId,
   requestOpenView,
+  newShareToken,
+  noteShareUrl,
 } from "@/lib/workspace"
 import {
   differenceInCalendarDays,
@@ -61,6 +67,82 @@ interface Note {
   tag: string | null
   folder_id: string | null
   created_at: string
+  share_token?: string | null
+}
+
+
+function NoteSharePopover({ note, onTokenChange }: {
+  note: Note
+  onTokenChange: (token: string | null) => Promise<string | null>
+}) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const link = note.share_token ? noteShareUrl(note.share_token) : null
+
+  const setToken = async (token: string | null) => {
+    setBusy(true)
+    setError(null)
+    const result = await onTokenChange(token)
+    setBusy(false)
+    setError(result)
+  }
+
+  const copy = async () => {
+    if (!link) return
+    try {
+      await navigator.clipboard.writeText(link)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1500)
+    } catch {
+      setError("Couldn't copy automatically. Select the link and copy it.")
+    }
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant={note.share_token ? "secondary" : "outline"} size="sm"
+          className="gap-1.5 text-xs font-semibold" title="Share this note">
+          {note.share_token ? <Globe className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
+          <span className="hidden sm:inline">{note.share_token ? "Shared" : "Share"}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 space-y-3 rounded-xl p-4">
+        <div>
+          <p className="text-sm font-extrabold">Share this note</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Anyone with the link can view “{note.title}”. They can't edit it, and you can turn the link off at any time.
+          </p>
+        </div>
+        {link ? (
+          <>
+            <div className="flex gap-1.5">
+              <Input readOnly value={link} onFocus={(event) => event.currentTarget.select()}
+                className="h-9 text-xs" aria-label="Note share link" />
+              <Button size="sm" className="h-9 shrink-0 gap-1 rounded-lg" onClick={() => void copy()}>
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? "Copied" : "Copy"}
+              </Button>
+            </div>
+            <div className="flex justify-between gap-2">
+              <Button variant="ghost" size="sm" className="h-8 text-xs" disabled={busy}
+                onClick={() => void setToken(newShareToken())}>New link</Button>
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-destructive hover:text-destructive"
+                disabled={busy} onClick={() => void setToken(null)}>Stop sharing</Button>
+            </div>
+          </>
+        ) : (
+          <Button className="w-full gap-1.5 rounded-lg" disabled={busy}
+            onClick={() => void setToken(newShareToken())}>
+            {busy ? <ShareLoader className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+            Create a share link
+          </Button>
+        )}
+        {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
+      </PopoverContent>
+    </Popover>
+  )
 }
 
 interface Category {
@@ -560,6 +642,25 @@ export function NotesTracker() {
     return null
   }
 
+
+  const updateNoteShareToken = async (note: Note, token: string | null): Promise<string | null> => {
+    const { data, error } = await supabase
+      .from("notes")
+      .update({ share_token: token })
+      .eq("id", note.id)
+      .select()
+      .single()
+
+    if (error || !data) {
+      return error && /share_token|column/i.test(error.message)
+        ? "Note sharing isn't set up in your database yet. Add the share_token column and get_shared_note RPC."
+        : error?.message ?? "Could not update the share link."
+    }
+    setNotes((previous) => previous.map((item) => item.id === data.id ? data : item))
+    setSelectedNote(data)
+    return null
+  }
+
   // --- UI Handlers ---
   const handleSelectNote = (note: Note) => {
     setSelectedNote(note)
@@ -998,16 +1099,7 @@ export function NotesTracker() {
                     <div className="flex items-center gap-1 sm:gap-1.5">
                       {selectedNote && !isEditing && (
                         <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => void shareNote(selectedNote)}
-                            className="gap-1.5 text-xs font-semibold"
-                            title="Share note text"
-                          >
-                            <Share2 className="h-3.5 w-3.5" />
-                            <span className="hidden sm:inline">Share</span>
-                          </Button>
+                          <NoteSharePopover note={selectedNote} onTokenChange={(token) => updateNoteShareToken(selectedNote, token)} />
                           <Button
                             variant="outline"
                             size="sm"
