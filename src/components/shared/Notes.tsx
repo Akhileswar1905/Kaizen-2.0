@@ -19,6 +19,8 @@ import {
   Edit3,
   FileText,
   FileInput,
+  Share2,
+  Download,
   X,
 } from "lucide-react"
 import { useWorkspace } from "@/contexts/WorkspaceContext"
@@ -319,6 +321,88 @@ export function NotesTracker() {
       return
     }
     requestOpenView(customViewId(result.page.id))
+  }
+
+  const shareNote = async (note: Note) => {
+    const parsed = new DOMParser().parseFromString(note.content, "text/html")
+    const textContent = parsed.body.innerText || parsed.body.textContent || ""
+    const shareText = textContent.trim()
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: note.title, text: shareText })
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return
+        try {
+          await navigator.clipboard.writeText(`${note.title}\\n\\n${shareText}`)
+          window.alert("Note copied to clipboard. You can paste it into any app to share.")
+        } catch {
+          window.alert("Sharing isn't available in this browser.")
+        }
+      }
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(`${note.title}\\n\\n${shareText}`)
+      window.alert("Note copied to clipboard. You can paste it into any app to share.")
+    } catch {
+      window.prompt("Copy your note to share it:", `${note.title}\\n\\n${shareText}`)
+    }
+  }
+
+  const downloadNote = (note: Note) => {
+    const safeTitle = note.title.trim().replace(/[\\\\/:*?"<>|]+/g, "-").slice(0, 80) || "kaizen-note"
+    const exportedHtml = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${safeTitle.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</title>
+<style>
+  :root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+  body { max-width: 860px; margin: 48px auto; padding: 0 24px; line-height: 1.7; color: CanvasText; }
+  h1 { line-height: 1.2; margin-bottom: 8px; }
+  .meta { color: GrayText; font-size: 13px; margin-bottom: 32px; }
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+  th, td { border: 1px solid GrayText; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: color-mix(in srgb, CanvasText 8%, Canvas); }
+  pre { overflow-x: auto; padding: 16px; border-radius: 8px; background: color-mix(in srgb, CanvasText 8%, Canvas); }
+  .mermaid { overflow-x: auto; }
+  img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<h1>${safeTitle.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</h1>
+<p class="meta">Exported from Kaizen · ${new Date().toLocaleDateString()}</p>
+<article>${note.content}</article>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "neutral" });
+  for (const [index, code] of [...document.querySelectorAll("pre > code")].entries()) {
+    if (!code.textContent?.startsWith("%%mermaid\\n")) continue;
+    const source = code.textContent.replace(/^%%mermaid\\n/, "").trim();
+    try {
+      const { svg } = await mermaid.render("kaizen-export-" + index, source);
+      const wrapper = document.createElement("div");
+      wrapper.className = "mermaid";
+      wrapper.innerHTML = svg;
+      code.parentElement?.replaceWith(wrapper);
+    } catch (error) { console.error("Mermaid diagram failed to render", error); }
+  }
+</script>
+</body>
+</html>`
+
+    const blob = new Blob([exportedHtml], { type: "text/html;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `${safeTitle}.html`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
   }
 
   const [notes, setNotes] = useState<Note[]>([])
@@ -914,6 +998,26 @@ export function NotesTracker() {
                     <div className="flex items-center gap-1 sm:gap-1.5">
                       {selectedNote && !isEditing && (
                         <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => void shareNote(selectedNote)}
+                            className="gap-1.5 text-xs font-semibold"
+                            title="Share note text"
+                          >
+                            <Share2 className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Share</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadNote(selectedNote)}
+                            className="gap-1.5 text-xs font-semibold"
+                            title="Download note as an HTML file"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Download</span>
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
