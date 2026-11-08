@@ -30,7 +30,6 @@ import {
   Globe,
   Copy,
   Check,
-  Loader2 as ShareLoader,
 } from "lucide-react"
 import { useWorkspace } from "@/contexts/WorkspaceContext"
 import {
@@ -140,7 +139,7 @@ function NoteSharePopover({ note, onTokenChange }: {
         ) : (
           <Button className="w-full gap-1.5 rounded-lg" disabled={busy}
             onClick={() => void setToken(newShareToken())}>
-            {busy ? <ShareLoader className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
             Create a share link
           </Button>
         )}
