@@ -37,6 +37,7 @@ import { useNotifications } from "@/contexts/NotificationContext"
 import {
   LEAD_OPTIONS,
   REPEAT_LABELS,
+  getRepeatLabel,
   nextOccurrence,
   type ReminderRepeat,
 } from "@/lib/notifications"
@@ -139,7 +140,7 @@ export function NotificationCenter({
             key: `r-${reminder.id}`,
             at: next,
             title: reminder.title,
-            detail: REPEAT_LABELS[reminder.repeat],
+            detail: getRepeatLabel(reminder.repeat),
             kind: "reminder",
           })
       }
@@ -382,6 +383,7 @@ function ReminderForm({
   const [date, setDate] = useState(format(nextHour, "yyyy-MM-dd"))
   const [time, setTime] = useState(format(nextHour, "HH:mm"))
   const [repeat, setRepeat] = useState<ReminderRepeat>("none")
+  const [intervalMinutes, setIntervalMinutes] = useState(60)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -401,8 +403,8 @@ function ReminderForm({
     const at = new Date(`${date}T${time}:00`)
     if (Number.isNaN(at.getTime()))
       return setError("Pick a valid date and time.")
-    if (repeat === "none" && at <= new Date())
-      return setError("Pick a time in the future.")
+    if (at <= new Date())
+      return setError("Pick a start time in the future.")
     setSaving(true)
     const result = await onAdd({
       title: title.trim(),
@@ -466,18 +468,47 @@ function ReminderForm({
           className="h-9 w-28"
         />
         <select
-          value={repeat}
-          onChange={(event) => setRepeat(event.target.value as ReminderRepeat)}
+          value={repeat.startsWith("interval:") ? "interval" : repeat}
+          onChange={(event) => {
+            const value = event.target.value
+            setRepeat(value === "interval" ? `interval:${intervalMinutes}` : value as ReminderRepeat)
+          }}
           aria-label="Repeat"
           className="h-9 rounded-md border border-input bg-background px-2 text-sm"
         >
-          {(Object.keys(REPEAT_LABELS) as ReminderRepeat[]).map((value) => (
+          {(Object.keys(REPEAT_LABELS) as CalendarReminderRepeat[]).map((value) => (
             <option key={value} value={value}>
               {REPEAT_LABELS[value]}
             </option>
           ))}
+          <option value="interval">Every…</option>
         </select>
       </div>
+      {repeat.startsWith("interval:") && (
+        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
+          <Label htmlFor="reminder-interval" className="shrink-0 text-xs">
+            Repeat every
+          </Label>
+          <Input
+            id="reminder-interval"
+            type="number"
+            min={1}
+            max={10080}
+            step={1}
+            value={intervalMinutes}
+            onChange={(event) => {
+              const value = Math.max(1, Math.min(10080, Number(event.target.value) || 1))
+              setIntervalMinutes(value)
+              setRepeat(`interval:${value}`)
+            }}
+            className="h-8 w-20"
+          />
+          <span className="text-xs text-muted-foreground">minutes</span>
+          <span className="ml-auto text-xs font-semibold text-muted-foreground">
+            {getRepeatLabel(repeat)}
+          </span>
+        </div>
+      )}
       <Input
         value={note}
         onChange={(event) => setNote(event.target.value)}
@@ -542,7 +573,7 @@ function ReminderList({
           {reminder.title}
         </p>
         <p className="truncate text-xs font-normal text-muted-foreground">
-          {REPEAT_LABELS[reminder.repeat]}
+          {getRepeatLabel(reminder.repeat)}
           {next
             ? ` · next ${when(next)}`
             : reminder.repeat === "none"
