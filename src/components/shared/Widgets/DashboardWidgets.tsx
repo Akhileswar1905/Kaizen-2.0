@@ -23,6 +23,7 @@ import { daysUntil } from "@/lib/pageApps"
 import type { DashboardMetrics, Point } from "@/hooks/useDashboardMetrics"
 import type { DashboardWidget } from "@/lib/workspace"
 import { RANGE_LABELS } from "@/lib/dashboardWidgets"
+import { FocusSessionWidget } from "./FocusSessionWidget"
 
 function Shell({
   title,
@@ -506,5 +507,7 @@ export function WidgetCard({
       )
     case "countdown":
       return <CountdownWidget widget={widget} />
+    case "focus":
+      return <FocusSessionWidget widget={widget} />
   }
 }
