@@ -335,6 +335,8 @@ h1,h2,h3,h4,h5,h6 { font-weight:700; letter-spacing:-0.015em; }
 .kaizen-page--planner { --page-accent: oklch(0.68 0.15 220); }
 .kaizen-page--time-audit { --page-accent: oklch(0.67 0.15 190); }
 .kaizen-page--learning { --page-accent: oklch(0.68 0.16 115); }
+/* Habit Tracker content ends naturally; avoid reserving excess footer space. */
+.kaizen-page--habits { padding-bottom: 2rem !important; }
 .kaizen-page > * {
   position: relative;
   isolation: isolate;
@@ -1003,3 +1005,8 @@ h1,h2,h3,h4,h5,h6 { font-weight:700; letter-spacing:-0.015em; }
 .kaizen-page-heading-icon svg{width:1.25rem;height:1.25rem}
 .kaizen-page-heading-title{color:var(--foreground);font-size:clamp(1.4rem,2.2vw,1.75rem);font-weight:750;line-height:1.2;letter-spacing:-.035em}
 .kaizen-page-heading-description{margin-top:.3rem;color:var(--muted-foreground);font-size:.8125rem;font-weight:500;line-height:1.5}
+
+
+@media (max-width: 640px) {
+  .kaizen-page--habits { padding-bottom: 6rem !important; }
+}

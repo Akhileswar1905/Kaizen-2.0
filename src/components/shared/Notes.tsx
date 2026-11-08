@@ -2,6 +2,11 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
@@ -19,12 +24,19 @@ import {
   Edit3,
   FileText,
   FileInput,
+  Share2,
+  Download,
   X,
+  Globe,
+  Copy,
+  Check,
 } from "lucide-react"
 import { useWorkspace } from "@/contexts/WorkspaceContext"
 import {
   customViewId,
   requestOpenView,
+  newShareToken,
+  noteShareUrl,
 } from "@/lib/workspace"
 import {
   differenceInCalendarDays,
@@ -59,6 +71,82 @@ interface Note {
   tag: string | null
   folder_id: string | null
   created_at: string
+  share_token?: string | null
+}
+
+
+function NoteSharePopover({ note, onTokenChange }: {
+  note: Note
+  onTokenChange: (token: string | null) => Promise<string | null>
+}) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const link = note.share_token ? noteShareUrl(note.share_token) : null
+
+  const setToken = async (token: string | null) => {
+    setBusy(true)
+    setError(null)
+    const result = await onTokenChange(token)
+    setBusy(false)
+    setError(result)
+  }
+
+  const copy = async () => {
+    if (!link) return
+    try {
+      await navigator.clipboard.writeText(link)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1500)
+    } catch {
+      setError("Couldn't copy automatically. Select the link and copy it.")
+    }
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant={note.share_token ? "secondary" : "outline"} size="sm"
+          className="gap-1.5 text-xs font-semibold" title="Share this note">
+          {note.share_token ? <Globe className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
+          <span className="hidden sm:inline">{note.share_token ? "Shared" : "Share"}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 space-y-3 rounded-xl p-4">
+        <div>
+          <p className="text-sm font-extrabold">Share this note</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Anyone with the link can view “{note.title}”. They can't edit it, and you can turn the link off at any time.
+          </p>
+        </div>
+        {link ? (
+          <>
+            <div className="flex gap-1.5">
+              <Input readOnly value={link} onFocus={(event) => event.currentTarget.select()}
+                className="h-9 text-xs" aria-label="Note share link" />
+              <Button size="sm" className="h-9 shrink-0 gap-1 rounded-lg" onClick={() => void copy()}>
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? "Copied" : "Copy"}
+              </Button>
+            </div>
+            <div className="flex justify-between gap-2">
+              <Button variant="ghost" size="sm" className="h-8 text-xs" disabled={busy}
+                onClick={() => void setToken(newShareToken())}>New link</Button>
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-destructive hover:text-destructive"
+                disabled={busy} onClick={() => void setToken(null)}>Stop sharing</Button>
+            </div>
+          </>
+        ) : (
+          <Button className="w-full gap-1.5 rounded-lg" disabled={busy}
+            onClick={() => void setToken(newShareToken())}>
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+            Create a share link
+          </Button>
+        )}
+        {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
+      </PopoverContent>
+    </Popover>
+  )
 }
 
 interface Category {
@@ -132,7 +220,7 @@ function toSnippet(html: string): string {
 
 
 /** Renders editable Mermaid source blocks as diagrams in the saved-note preview. */
-function NoteContentPreview({ html }: { html: string }) {
+export function NoteContentPreview({ html }: { html: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -321,6 +409,60 @@ export function NotesTracker() {
     requestOpenView(customViewId(result.page.id))
   }
 
+  const downloadNote = (note: Note) => {
+    const safeTitle = note.title.trim().replace(/[\\\\/:*?"<>|]+/g, "-").slice(0, 80) || "kaizen-note"
+    const exportedHtml = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${safeTitle.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</title>
+<style>
+  :root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+  body { max-width: 860px; margin: 48px auto; padding: 0 24px; line-height: 1.7; color: CanvasText; }
+  h1 { line-height: 1.2; margin-bottom: 8px; }
+  .meta { color: GrayText; font-size: 13px; margin-bottom: 32px; }
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+  th, td { border: 1px solid GrayText; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: color-mix(in srgb, CanvasText 8%, Canvas); }
+  pre { overflow-x: auto; padding: 16px; border-radius: 8px; background: color-mix(in srgb, CanvasText 8%, Canvas); }
+  .mermaid { overflow-x: auto; }
+  img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<h1>${safeTitle.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</h1>
+<p class="meta">Exported from Kaizen · ${new Date().toLocaleDateString()}</p>
+<article>${note.content}</article>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "neutral" });
+  for (const [index, code] of [...document.querySelectorAll("pre > code")].entries()) {
+    if (!code.textContent?.startsWith("%%mermaid\n")) continue;
+    const source = code.textContent.replace(/^%%mermaid\n/, "").trim();
+    try {
+      const { svg } = await mermaid.render("kaizen-export-" + index, source);
+      const wrapper = document.createElement("div");
+      wrapper.className = "mermaid";
+      wrapper.innerHTML = svg;
+      code.parentElement?.replaceWith(wrapper);
+    } catch (error) { console.error("Mermaid diagram failed to render", error); }
+  }
+</script>
+</body>
+</html>`
+
+    const blob = new Blob([exportedHtml], { type: "text/html;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `${safeTitle}.html`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
+
   const [notes, setNotes] = useState<Note[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [folders, setFolders] = useState<FolderRow[]>([])
@@ -473,6 +615,25 @@ export function NotesTracker() {
       [...prev, data].sort((a, b) => a.name.localeCompare(b.name))
     )
     if (isEditing) setSelectedTag(data.name)
+    return null
+  }
+
+
+  const updateNoteShareToken = async (note: Note, token: string | null): Promise<string | null> => {
+    const { data, error } = await supabase
+      .from("notes")
+      .update({ share_token: token })
+      .eq("id", note.id)
+      .select()
+      .single()
+
+    if (error || !data) {
+      return error && /share_token|column/i.test(error.message)
+        ? "Note sharing isn't set up in your database yet. Add the share_token column and get_shared_note RPC."
+        : error?.message ?? "Could not update the share link."
+    }
+    setNotes((previous) => previous.map((item) => item.id === data.id ? data : item))
+    setSelectedNote(data)
     return null
   }
 
@@ -914,6 +1075,17 @@ export function NotesTracker() {
                     <div className="flex items-center gap-1 sm:gap-1.5">
                       {selectedNote && !isEditing && (
                         <>
+                          <NoteSharePopover note={selectedNote} onTokenChange={(token) => updateNoteShareToken(selectedNote, token)} />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadNote(selectedNote)}
+                            className="gap-1.5 text-xs font-semibold"
+                            title="Download note as an HTML file"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Download</span>
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"

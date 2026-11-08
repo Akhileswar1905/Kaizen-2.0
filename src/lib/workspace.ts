@@ -333,6 +333,11 @@ export function shareUrl(token: string) {
   return `${base}/#/share/${token}`
 }
 
+/** Public link to a shared note, using the same deployed-app base as page shares. */
+export function noteShareUrl(token: string) {
+  return shareUrl(token).replace("/#/share/", "/#/share-note/")
+}
+
 const KIND_LABELS: Record<CustomPageKind, string> = {
   page: "Page",
   notes: "Page",

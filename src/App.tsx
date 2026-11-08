@@ -7,6 +7,7 @@ import { ProtectedRoute } from "@/components/shared/Routes/ProtectedRoute"
 import { Auth } from "@/components/shared/Auth/Auth"
 import KaizenTracker from "./components/shared/Views/Kaizen"
 import { SharedPageView } from "./components/shared/Views/SharedPageView"
+import { SharedNoteView } from "./components/shared/Views/SharedNoteView"
 
 export function App() {
   return (
@@ -21,6 +22,7 @@ export function App() {
 
                 {/* Public - a page someone shared by link */}
                 <Route path="/share/:token" element={<SharedPageView />} />
+                <Route path="/share-note/:token" element={<SharedNoteView />} />
 
                 {/* Protected Routes - Only accessible if logged in */}
                 <Route element={<ProtectedRoute />}>
