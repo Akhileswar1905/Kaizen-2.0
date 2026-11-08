@@ -334,7 +334,7 @@ export function NotesTracker() {
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") return
         try {
-          await navigator.clipboard.writeText(`${note.title}\\n\\n${shareText}`)
+          await navigator.clipboard.writeText(`${note.title}\n\n${shareText}`)
           window.alert("Note copied to clipboard. You can paste it into any app to share.")
         } catch {
           window.alert("Sharing isn't available in this browser.")
@@ -344,10 +344,10 @@ export function NotesTracker() {
     }
 
     try {
-      await navigator.clipboard.writeText(`${note.title}\\n\\n${shareText}`)
+      await navigator.clipboard.writeText(`${note.title}\n\n${shareText}`)
       window.alert("Note copied to clipboard. You can paste it into any app to share.")
     } catch {
-      window.prompt("Copy your note to share it:", `${note.title}\\n\\n${shareText}`)
+      window.prompt("Copy your note to share it:", `${note.title}\n\n${shareText}`)
     }
   }
 
@@ -380,8 +380,8 @@ export function NotesTracker() {
   import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
   mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "neutral" });
   for (const [index, code] of [...document.querySelectorAll("pre > code")].entries()) {
-    if (!code.textContent?.startsWith("%%mermaid\\n")) continue;
-    const source = code.textContent.replace(/^%%mermaid\\n/, "").trim();
+    if (!code.textContent?.startsWith("%%mermaid\n")) continue;
+    const source = code.textContent.replace(/^%%mermaid\n/, "").trim();
     try {
       const { svg } = await mermaid.render("kaizen-export-" + index, source);
       const wrapper = document.createElement("div");
