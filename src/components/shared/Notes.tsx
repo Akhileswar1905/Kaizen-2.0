@@ -572,9 +572,12 @@ export function NotesTracker() {
   }
 
   const fetchCategories = async () => {
+    if (!user) return
+    // Include shared/system categories (user_id IS NULL) alongside this user's categories.
     const { data, error } = await supabase
       .from("note_categories")
       .select("*")
+      .or(`user_id.is.null,user_id.eq.${user.id}`)
       .order("name")
     if (!error && data) setCategories(data)
   }
