@@ -410,34 +410,6 @@ export function NotesTracker() {
     requestOpenView(customViewId(result.page.id))
   }
 
-  const shareNote = async (note: Note) => {
-    const parsed = new DOMParser().parseFromString(note.content, "text/html")
-    const textContent = parsed.body.innerText || parsed.body.textContent || ""
-    const shareText = textContent.trim()
-
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: note.title, text: shareText })
-      } catch (error) {
-        if (error instanceof Error && error.name === "AbortError") return
-        try {
-          await navigator.clipboard.writeText(`${note.title}\n\n${shareText}`)
-          window.alert("Note copied to clipboard. You can paste it into any app to share.")
-        } catch {
-          window.alert("Sharing isn't available in this browser.")
-        }
-      }
-      return
-    }
-
-    try {
-      await navigator.clipboard.writeText(`${note.title}\n\n${shareText}`)
-      window.alert("Note copied to clipboard. You can paste it into any app to share.")
-    } catch {
-      window.prompt("Copy your note to share it:", `${note.title}\n\n${shareText}`)
-    }
-  }
-
   const downloadNote = (note: Note) => {
     const safeTitle = note.title.trim().replace(/[\\\\/:*?"<>|]+/g, "-").slice(0, 80) || "kaizen-note"
     const exportedHtml = `<!doctype html>
