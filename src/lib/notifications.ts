@@ -84,7 +84,8 @@ export const saveSnoozes = (snoozes: Snooze[]) => writeJson(SNOOZE_KEY, snoozes)
 // Reminders
 // ---------------------------------------------------------------------------
 
-export type ReminderRepeat = "none" | "daily" | "weekdays" | "weekly"
+export type CalendarReminderRepeat = "none" | "daily" | "weekdays" | "weekly"
+export type ReminderRepeat = CalendarReminderRepeat | `interval:${number}`
 
 export type Reminder = {
   id: string
@@ -97,11 +98,23 @@ export type Reminder = {
   created_at: string
 }
 
-export const REPEAT_LABELS: Record<ReminderRepeat, string> = {
+export const REPEAT_LABELS: Record<CalendarReminderRepeat, string> = {
   none: "Once",
   daily: "Every day",
   weekdays: "Weekdays",
   weekly: "Every week",
+}
+
+export const getRepeatLabel = (repeat: ReminderRepeat) => {
+  if (repeat.startsWith("interval:")) {
+    const minutes = Number(repeat.slice("interval:".length))
+    if (minutes >= 60 && minutes % 60 === 0)
+      return `Every ${minutes / 60} ${minutes / 60 === 1 ? "hour" : "hours"}`
+    return `Every ${minutes} minutes`
+  }
+  if (repeat in REPEAT_LABELS)
+    return REPEAT_LABELS[repeat as CalendarReminderRepeat]
+  return REPEAT_LABELS.none
 }
 
 const onDay = (day: Date, base: Date) =>
@@ -121,6 +134,14 @@ export function lastOccurrence(
 ): Date | null {
   const base = new Date(reminder.remind_at)
   if (reminder.repeat === "none") return base <= now ? base : null
+  if (reminder.repeat.startsWith("interval:")) {
+    const minutes = Number(reminder.repeat.slice("interval:".length))
+    if (!Number.isFinite(minutes) || minutes < 1) return null
+    const intervalMs = minutes * 60_000
+    const elapsed = now.getTime() - base.getTime()
+    if (elapsed < 0) return null
+    return new Date(base.getTime() + Math.floor(elapsed / intervalMs) * intervalMs)
+  }
   for (let i = 0; i <= 7; i++) {
     const candidate = onDay(addDays(now, -i), base)
     if (candidate <= now && matches(reminder, candidate, base)) return candidate
@@ -135,6 +156,14 @@ export function nextOccurrence(
 ): Date | null {
   const base = new Date(reminder.remind_at)
   if (reminder.repeat === "none") return base > now ? base : null
+  if (reminder.repeat.startsWith("interval:")) {
+    const minutes = Number(reminder.repeat.slice("interval:".length))
+    if (!Number.isFinite(minutes) || minutes < 1) return null
+    if (base > now) return base
+    const intervalMs = minutes * 60_000
+    const elapsed = now.getTime() - base.getTime()
+    return new Date(base.getTime() + (Math.floor(elapsed / intervalMs) + 1) * intervalMs)
+  }
   for (let i = 0; i <= 8; i++) {
     const candidate = onDay(addDays(now, i), base)
     if (candidate > now && matches(reminder, candidate, base)) return candidate
