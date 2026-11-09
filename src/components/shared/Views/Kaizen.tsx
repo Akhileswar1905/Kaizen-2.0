@@ -16,6 +16,7 @@ import { FinanceView } from "./FinanceView"
 import { SystemDesignHub } from "./SystemDesignTracker"
 import { NotesTracker } from "../Notes"
 import { StatusWindow } from "../Widgets/StatusWindow"
+import { FloatingClock } from "../Widgets/FloatingClock"
 import { useEffect, useState } from "react"
 import { WorkoutTracker } from "./WorkoutTracker"
 import { PlannerView } from "./PlannerView"
@@ -352,6 +353,8 @@ export default function KaizenTracker() {
         onClose={() => setIsSettingsOpen(false)}
         onOpenPage={setActiveView}
       />
+
+      <FloatingClock />
 
       <FloatingMenu
         pages={visiblePages}
