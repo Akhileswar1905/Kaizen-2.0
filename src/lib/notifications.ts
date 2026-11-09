@@ -112,7 +112,9 @@ export const getRepeatLabel = (repeat: ReminderRepeat) => {
       return `Every ${minutes / 60} ${minutes / 60 === 1 ? "hour" : "hours"}`
     return `Every ${minutes} minutes`
   }
-  return REPEAT_LABELS[repeat]
+  if (repeat in REPEAT_LABELS)
+    return REPEAT_LABELS[repeat as CalendarReminderRepeat]
+  return REPEAT_LABELS.none
 }
 
 const onDay = (day: Date, base: Date) =>
