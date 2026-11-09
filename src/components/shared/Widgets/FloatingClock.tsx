@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 
 const POSITION_KEY = "kaizen-floating-clock-position"
-const CLOCK_WIDTH = 264
-const CLOCK_HEIGHT = 132
+const CLOCK_SIZE = 216
 const EDGE_GAP = 16
 
 type Position = { x: number; y: number }
@@ -10,16 +9,16 @@ type Position = { x: number; y: number }
 function defaultPosition(): Position {
   if (typeof window === "undefined") return { x: 0, y: 0 }
   return {
-    x: Math.max(EDGE_GAP, window.innerWidth - CLOCK_WIDTH - EDGE_GAP),
-    y: Math.max(EDGE_GAP, window.innerHeight - CLOCK_HEIGHT - 104),
+    x: Math.max(EDGE_GAP, window.innerWidth - CLOCK_SIZE - EDGE_GAP),
+    y: Math.max(EDGE_GAP, window.innerHeight - CLOCK_SIZE - 104),
   }
 }
 
 function clampPosition(position: Position): Position {
   if (typeof window === "undefined") return position
   return {
-    x: Math.min(Math.max(EDGE_GAP, position.x), Math.max(EDGE_GAP, window.innerWidth - CLOCK_WIDTH - EDGE_GAP)),
-    y: Math.min(Math.max(EDGE_GAP, position.y), Math.max(EDGE_GAP, window.innerHeight - CLOCK_HEIGHT - EDGE_GAP)),
+    x: Math.min(Math.max(EDGE_GAP, position.x), Math.max(EDGE_GAP, window.innerWidth - CLOCK_SIZE - EDGE_GAP)),
+    y: Math.min(Math.max(EDGE_GAP, position.y), Math.max(EDGE_GAP, window.innerHeight - CLOCK_SIZE - EDGE_GAP)),
   }
 }
 
@@ -56,21 +55,21 @@ function AnalogClock({ now }: { now: Date }) {
   return (
     <div
       aria-label={now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
-      className="relative h-[88px] w-[88px] shrink-0 rounded-full border border-border/80 bg-background shadow-[inset_0_1px_3px_rgba(0,0,0,0.045)]"
+      className="relative h-[104px] w-[104px] shrink-0 rounded-full border border-border/80 bg-background shadow-[inset_0_1px_3px_rgba(0,0,0,0.045)]"
     >
       {Array.from({ length: 60 }, (_, index) => {
         const major = index % 5 === 0
         return (
           <span
             key={index}
-            className={`absolute left-1/2 top-1/2 rounded-full ${major ? "h-[5px] w-[1.5px] bg-foreground/65" : "h-[2px] w-px bg-muted-foreground/35"}`}
-            style={{ transform: `translate(-50%, -50%) rotate(${index * 6}deg) translateY(-38px)` }}
+            className={`absolute left-1/2 top-1/2 rounded-full ${major ? "h-[6px] w-[1.5px] bg-foreground/65" : "h-[2px] w-px bg-muted-foreground/35"}`}
+            style={{ transform: `translate(-50%, -50%) rotate(${index * 6}deg) translateY(-46px)` }}
           />
         )
       })}
-      <span className="absolute left-1/2 top-1/2 h-[23px] w-[3px] rounded-full bg-foreground" style={handStyle(hours * 30, 23, 3)} />
-      <span className="absolute left-1/2 top-1/2 h-[31px] w-[2px] rounded-full bg-foreground/75" style={handStyle(minutes * 6, 31, 2)} />
-      <span className="absolute left-1/2 top-1/2 h-[34px] w-px rounded-full bg-primary" style={handStyle(seconds * 6, 34, 1)} />
+      <span className="absolute left-1/2 top-1/2 h-[28px] w-[3px] rounded-full bg-foreground" style={handStyle(hours * 30, 28, 3)} />
+      <span className="absolute left-1/2 top-1/2 h-[37px] w-[2px] rounded-full bg-foreground/75" style={handStyle(minutes * 6, 37, 2)} />
+      <span className="absolute left-1/2 top-1/2 h-[41px] w-px rounded-full bg-primary" style={handStyle(seconds * 6, 41, 1)} />
       <span className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background bg-primary shadow-sm" />
     </div>
   )
@@ -121,7 +120,7 @@ export function FloatingClock() {
   return (
     <section
       aria-label="Floating clock"
-      className="fixed z-[45] w-[264px] touch-none select-none rounded-[20px] border border-border/80 bg-card text-card-foreground shadow-[0_8px_28px_rgba(0,0,0,0.09)]"
+      className="fixed z-[45] flex h-[216px] w-[216px] touch-none select-none flex-col items-center rounded-[24px] border border-border/80 bg-card text-card-foreground shadow-[0_8px_28px_rgba(0,0,0,0.09)]"
       style={{ left: position.x, top: position.y }}
       onPointerDown={startDrag}
       onPointerMove={moveDrag}
@@ -140,28 +139,23 @@ export function FloatingClock() {
           if (event.key === "ArrowUp") setPosition((p) => clampPosition({ ...p, y: p.y - step }))
           if (event.key === "ArrowDown") setPosition((p) => clampPosition({ ...p, y: p.y + step }))
         }}
-        className="flex cursor-grab items-center justify-between px-4 pt-3 text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground active:cursor-grabbing"
+        className="flex w-full cursor-grab items-center justify-center pb-2 pt-3 text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground active:cursor-grabbing"
       >
-        <span>Local time</span>
-        <span className="h-1.5 w-1.5 rounded-full bg-primary/70" />
+        <span className="h-1 w-8 rounded-full bg-muted-foreground/25" />
       </div>
 
-      <div className="flex items-center gap-4 px-4 pb-4 pt-2">
-        <AnalogClock now={now} />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
-            <time dateTime={now.toISOString()} className="text-[29px] font-medium leading-none tracking-[-0.075em] tabular-nums">
-              {clockTime}
-            </time>
-            <span className="text-[10px] font-semibold tracking-wide text-muted-foreground">{period}</span>
-          </div>
-          <p className="mt-2 text-[11px] font-medium text-muted-foreground">
-            {now.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}
-          </p>
-          <p className="mt-1 text-[10px] tabular-nums tracking-[0.12em] text-muted-foreground/70">
-            {now.toLocaleTimeString([], { second: "2-digit" }).replace(/\D/g, "")} SEC
-          </p>
+      <AnalogClock now={now} />
+
+      <div className="mt-3 flex flex-col items-center text-center">
+        <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+          <time dateTime={now.toISOString()} className="text-[27px] font-medium leading-none tracking-[-0.075em] tabular-nums">
+            {clockTime}
+          </time>
+          <span className="text-[10px] font-semibold tracking-wide text-muted-foreground">{period}</span>
         </div>
+        <p className="mt-1.5 text-[10px] font-medium text-muted-foreground">
+          {now.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })}
+        </p>
       </div>
     </section>
   )
