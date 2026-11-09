@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
-import { RichTextEditor } from "./RichTextEditor"
+import { PageEditor } from "./Pages/PageEditor"
 import {
   Loader2,
   Trash2,
@@ -998,9 +998,21 @@ export function NotesTracker() {
                                     )}
                                   >
                                     <div className="flex items-baseline justify-between gap-3">
-                                      <h4 className="truncate text-sm leading-5 font-semibold text-foreground">
-                                        {note.title || "Untitled note"}
-                                      </h4>
+                                      <div className="flex min-w-0 items-center gap-2">
+                                        <h4 className="min-w-0 truncate text-sm leading-5 font-semibold text-foreground">
+                                          {note.title || "Untitled note"}
+                                        </h4>
+                                        {note.share_token && (
+                                          <span
+                                            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300"
+                                            title="This note is shared with anyone who has its link"
+                                            aria-label="Shared note"
+                                          >
+                                            <Globe className="h-3 w-3" />
+                                            <span>Shared</span>
+                                          </span>
+                                        )}
+                                      </div>
                                       <span className="shrink-0 text-[11px] font-medium text-muted-foreground tabular-nums">
                                         {when}
                                       </span>
@@ -1280,9 +1292,12 @@ export function NotesTracker() {
                         />
 
                         <div className="note-editor flex-1 pb-12">
-                          <RichTextEditor
-                            value={content}
+                          <PageEditor
+                            key={selectedNote?.id ?? "new-note"}
+                            initialHtml={content}
                             onChange={setContent}
+                            placeholder="Start writing… (type / for headings, lists and more)"
+                            showTemplates={false}
                           />
                         </div>
                       </form>
