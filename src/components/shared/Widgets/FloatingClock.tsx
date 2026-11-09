@@ -49,7 +49,7 @@ function AnalogClock({ now }: { now: Date }) {
         <span
           key={index}
           className="absolute left-1/2 top-1/2 h-[3px] w-[3px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-500/70 dark:bg-slate-300/70"
-          style={{ transform: `rotate(${index * 30}deg) translateY(-27px)` }}
+          style={{ transform: `translate(-50%, -50%) rotate(${index * 30}deg) translateY(-27px)` }}
         />
       ))}
       <span className="absolute left-1/2 top-1/2 h-[19px] w-[3px] origin-bottom -translate-x-1/2 -translate-y-full rounded-full bg-slate-800 dark:bg-slate-100" style={{ transform: `translate(-50%, -100%) rotate(${hours * 30}deg)` }} />
