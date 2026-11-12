@@ -134,7 +134,7 @@ export type WorkspaceSettings = {
   hidden_pages: string[]
   page_order: string[]
   currency: string
-  dashboard: { order: string[]; hidden: string[]; widgets?: DashboardWidget[] }
+  dashboard: { order: string[]; hidden: string[]; widgets?: DashboardWidget[]; clockVisibility?: { mobile: boolean; desktop: boolean } }
 }
 
 export type WidgetType = "stat" | "chart" | "meter" | "note" | "countdown" | "focus"
@@ -232,7 +232,7 @@ export const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettings = {
   hidden_pages: ["journal", "time-audit"],
   page_order: [],
   currency: "INR",
-  dashboard: { order: [], hidden: [], widgets: [] },
+  dashboard: { order: [], hidden: [], widgets: [], clockVisibility: { mobile: true, desktop: true } },
 }
 
 /** Keeps the menu tidy. Also enforced by a database trigger (supabase/sharing_and_dashboard.sql). */

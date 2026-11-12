@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import {
   Dialog,
@@ -69,6 +70,7 @@ export function WorkspaceSettings({
     setPageHidden,
     movePage,
     setCurrency,
+    setClockVisibility,
     createCustomPage,
     updateCustomPage,
     deleteCustomPage,
@@ -461,6 +463,42 @@ export function WorkspaceSettings({
                       <span className="text-xs">{label}</span>
                     </Button>
                   ))}
+                </div>
+              </section>
+              <section className="space-y-3 border-t border-border/60 pt-5">
+                <div>
+                  <h3 className="text-sm font-bold">Floating clock</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Choose which device types show the movable clock widget.
+                  </p>
+                </div>
+                <div className="space-y-3 rounded-xl border border-border/60 p-3">
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <Checkbox
+                      checked={settings.dashboard.clockVisibility?.mobile ?? true}
+                      disabled={saving}
+                      onCheckedChange={(checked) =>
+                        void run(() => setClockVisibility("mobile", checked === true))
+                      }
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold">Mobile</span>
+                      <span className="block text-xs text-muted-foreground">Show the clock on phones and small screens</span>
+                    </span>
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <Checkbox
+                      checked={settings.dashboard.clockVisibility?.desktop ?? true}
+                      disabled={saving}
+                      onCheckedChange={(checked) =>
+                        void run(() => setClockVisibility("desktop", checked === true))
+                      }
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold">Laptop / desktop</span>
+                      <span className="block text-xs text-muted-foreground">Show the clock on larger screens</span>
+                    </span>
+                  </label>
                 </div>
               </section>
               <section className="grid gap-2 border-t border-border/60 pt-5">

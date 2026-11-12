@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { Minus, Plus, RotateCcw } from "lucide-react"
+import { useWorkspace } from "@/contexts/WorkspaceContext"
 
 const POSITION_KEY = "kaizen-floating-clock-position"
 const SIZE_KEY = "kaizen-floating-clock-size"
@@ -97,6 +98,8 @@ function AnalogClock({ now, size }: { now: Date; size: number }) {
 }
 
 export function FloatingClock() {
+  const { settings } = useWorkspace()
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches)
   const [now, setNow] = useState(() => new Date())
   const [size, setSize] = useState(readSize)
   const [viewport, setViewport] = useState(() => ({
@@ -106,6 +109,13 @@ export function FloatingClock() {
   const effectiveSize = Math.max(MIN_SIZE, Math.min(size, viewport.width - EDGE_GAP * 2, viewport.height - EDGE_GAP * 2))
   const [position, setPosition] = useState<Position>(() => readPosition(readSize()))
   const dragOffset = useRef<Position | null>(null)
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)")
+    const updateDevice = () => setIsMobile(media.matches)
+    media.addEventListener("change", updateDevice)
+    return () => media.removeEventListener("change", updateDevice)
+  }, [])
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 1000)
@@ -161,6 +171,11 @@ export function FloatingClock() {
   const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true })
   const [clockTime, period] = time.split(" ")
   const compact = effectiveSize < 190
+  const clockVisible = isMobile
+    ? (settings.dashboard.clockVisibility?.mobile ?? true)
+    : (settings.dashboard.clockVisibility?.desktop ?? true)
+
+  if (!clockVisible) return null
 
   return (
     <section
