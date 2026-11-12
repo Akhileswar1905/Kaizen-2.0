@@ -41,16 +41,12 @@ import {
   Pencil,
   Calendar as CalendarIcon,
   LayoutList,
-  CalendarClock,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTodos } from "@/hooks/useTodos"
-import { TimeBlockWeek } from "@/components/shared/Planner/TimeBlockWeek"
 
 export function PlannerView() {
-  const [viewMode, setViewMode] = useState<"daily" | "calendar" | "blocks">(
-    "daily"
-  )
+  const [viewMode, setViewMode] = useState<"daily" | "calendar">("daily")
   const [currentDate, setCurrentDate] = useState(new Date())
   const [calendarMonth, setCalendarMonth] = useState(new Date())
   const [selectedTodoId, setSelectedTodoId] = useState<string | null>(null)
@@ -183,7 +179,7 @@ export function PlannerView() {
       <div
         className={cn(
           "planner-shell mx-auto w-full animate-in space-y-6 duration-500 fade-in slide-in-from-bottom-4",
-          viewMode === "blocks" ? "max-w-6xl" : "max-w-6xl"
+          "max-w-6xl"
         )}
       >
         {/* Header Section */}
@@ -217,18 +213,6 @@ export function PlannerView() {
             >
               <CalendarIcon className="h-4 w-4" />
               Calendar
-            </button>
-            <button
-              onClick={() => setViewMode("blocks")}
-              className={cn(
-                "flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition-all sm:flex-none",
-                viewMode === "blocks"
-                  ? "bg-muted text-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-              )}
-            >
-              <CalendarClock className="h-4 w-4" />
-              Time blocks
             </button>
           </div>
         </header>
@@ -274,13 +258,6 @@ export function PlannerView() {
           </Card>
         ) : (
           <Card className="planner-surface overflow-hidden border border-border/60 bg-card/75 shadow-sm backdrop-blur-xl">
-            {/* --- TIME BLOCKS VIEW --- */}
-            {viewMode === "blocks" && (
-              <CardContent className="p-0">
-                <TimeBlockWeek />
-              </CardContent>
-            )}
-
             {/* --- DAILY VIEW --- */}
             {viewMode === "daily" && (
               <CardContent className="flex flex-col gap-0 p-0 lg:flex-row">
