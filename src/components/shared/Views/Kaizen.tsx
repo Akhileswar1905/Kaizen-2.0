@@ -20,6 +20,7 @@ import { FloatingClock } from "../Widgets/FloatingClock"
 import { useEffect, useState } from "react"
 import { WorkoutTracker } from "./WorkoutTracker"
 import { PlannerView } from "./PlannerView"
+import { CalendarView } from "./CalendarView"
 import { TimeAuditView } from "./TimeAuditView"
 import { LearningChecklistView } from "./LearningChecklistView"
 import { HabitTrackerView } from "./HabitTrackerView"
@@ -189,6 +190,9 @@ export default function KaizenTracker() {
     }
     if (activeView === "planner") {
       return <div className="kaizen-page kaizen-page--planner"><PlannerView /></div>
+    }
+    if (activeView === "calendar") {
+      return <div className="kaizen-page kaizen-page--calendar"><CalendarView /></div>
     }
     if (activeView === "time-audit") {
       return <div className="kaizen-page kaizen-page--time-audit"><TimeAuditView onBack={() => setActiveView("dashboard")} /></div>
