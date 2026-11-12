@@ -7,6 +7,7 @@ export type BuiltInPageId =
   | "finance"
   | "notes"
   | "planner"
+  | "calendar"
   | "learning-checklist"
   | "journal"
   | "system-design"
@@ -197,9 +198,15 @@ export const BUILT_IN_PAGES: BuiltInPage[] = [
   },
   {
     id: "planner",
-    label: "Planner",
-    description: "Tasks and weekly time blocks",
-    icon: "Calendar",
+    label: "Task Planner",
+    description: "Daily tasks and task completion",
+    icon: "ListTodo",
+  },
+  {
+    id: "calendar",
+    label: "Calendar",
+    description: "Weekly schedule and time blocks",
+    icon: "CalendarDays",
   },
   {
     id: "learning-checklist",
