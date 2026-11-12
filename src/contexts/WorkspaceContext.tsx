@@ -82,6 +82,7 @@ interface WorkspaceContextType {
   setPageHidden: (id: PageId, hidden: boolean) => Promise<Result>
   movePage: (id: PageId, direction: -1 | 1) => Promise<Result>
   setCurrency: (currency: string) => Promise<Result>
+  setClockVisibility: (device: "mobile" | "desktop", visible: boolean) => Promise<Result>
   createCustomPage: (
     input: NewCustomPage
   ) => Promise<Result & { page?: CustomPage }>
@@ -284,6 +285,19 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const setCurrency = (currency: string) =>
     saveSettings({ ...settings, currency })
 
+  const setClockVisibility = (device: "mobile" | "desktop", visible: boolean) =>
+    saveSettings({
+      ...settings,
+      dashboard: {
+        ...settings.dashboard,
+        clockVisibility: {
+          mobile: settings.dashboard.clockVisibility?.mobile ?? true,
+          desktop: settings.dashboard.clockVisibility?.desktop ?? true,
+          [device]: visible,
+        },
+      },
+    })
+
   const plan = planById(planRow?.plan)
   const pageLimit = planRow?.page_limit ?? MAX_CUSTOM_PAGES
   const limitMessage = `You can have up to ${pageLimit} pages on the ${plan.name} plan. Delete one or get more pages.`
@@ -442,6 +456,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     setPageHidden,
     movePage,
     setCurrency,
+    setClockVisibility,
     createCustomPage,
     updateCustomPage,
     deleteCustomPage,
