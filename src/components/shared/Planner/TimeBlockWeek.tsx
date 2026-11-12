@@ -20,7 +20,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import { useTodos } from "@/hooks/useTodos"
 import {
   BLOCK_COLORS,
   fromMinutes,
@@ -129,7 +128,6 @@ interface DragState {
 }
 
 export function TimeBlockWeek() {
-  const { addTodo } = useTodos()
   const [weekStart, setWeekStart] = useState(() =>
     startOfWeek(new Date(), WEEK_OPTIONS)
   )
@@ -138,7 +136,6 @@ export function TimeBlockWeek() {
 
   const [draft, setDraft] = useState<DraftBlock | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
-  const [linkError, setLinkError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [drag, setDrag] = useState<DragState | null>(null)
   const [now, setNow] = useState(() => new Date())
@@ -218,21 +215,12 @@ export function TimeBlockWeek() {
       end: draft.end,
       color: draft.color,
     }
-    const isNewBlock = !draft.id
     const ok = draft.id
       ? await updateBlock(draft.id, input)
       : await addBlock(input)
     setSaving(false)
     if (ok) {
       setDraft(null)
-      if (isNewBlock) {
-        const task = await addTodo(title, "", draft.date)
-        if (!task) {
-          setLinkError("Time block saved, but its task could not be added. Check your task list connection and try again.")
-        } else {
-          setLinkError(null)
-        }
-      }
     }
   }
 
@@ -353,12 +341,6 @@ export function TimeBlockWeek() {
           <span className="font-medium">{error}</span>
         </div>
       )}
-      {linkError && (
-        <div role="alert" className="mx-4 mt-2 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-700 dark:text-amber-300">
-          {linkError}
-        </div>
-      )}
-
       {/* Grid */}
       <div className="overflow-x-auto">
         <div className="min-w-[760px]">
