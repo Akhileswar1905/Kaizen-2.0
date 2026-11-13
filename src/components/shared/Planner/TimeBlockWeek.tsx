@@ -296,11 +296,6 @@ export function TimeBlockWeek() {
 
   const nowMinutes = now.getHours() * 60 + now.getMinutes()
   const rangeLabel = `${format(days[0], "d MMM")} – ${format(days[6], "d MMM yyyy")}`
-  const isCurrentWeek = isSameDay(
-    weekStart,
-    startOfWeek(new Date(), WEEK_OPTIONS)
-  )
-
   return (
     <div className="flex flex-col">
       {/* Toolbar */}
@@ -330,8 +325,11 @@ export function TimeBlockWeek() {
           </Button>
           <Button size="sm" className="h-8 rounded-full" onClick={() => {
             const now = new Date()
-            const start = Math.ceil((now.getHours() * 60 + now.getMinutes()) / 30) * 30
-            openNew(format(now, "yyyy-MM-dd"), start, Math.min(start + 60, 24 * 60 - 1))
+            const start = Math.min(
+              Math.ceil((now.getHours() * 60 + now.getMinutes()) / 30) * 30,
+              22 * 60 + 30
+            )
+            openNew(format(now, "yyyy-MM-dd"), start, start + 60)
           }}>
             + New event
           </Button>
@@ -477,7 +475,12 @@ export function TimeBlockWeek() {
                               <span className="block truncate font-medium opacity-80">
                                 {formatClock(block.start)} – {formatClock(block.end)}
                               </span>
-                              {height >= 72 && block.description && (
+                              {height >= 72 && (
+                                <span className="mt-0.5 block truncate text-[9px] font-medium uppercase tracking-wide opacity-75">
+                                  {block.category}
+                                </span>
+                              )}
+                              {height >= 90 && block.description && (
                                 <span className="mt-0.5 block overflow-hidden text-[10px] font-normal opacity-85 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
                                   {block.description}
                                 </span>
