@@ -387,7 +387,7 @@ export function TimeBlockWeek() {
           </div>
 
           {/* Scrollable hours */}
-          <div ref={scrollRef} className="max-h-[620px] overflow-y-auto">
+          <div ref={scrollRef} className="h-[min(80vh,820px)] min-h-[480px] overflow-y-auto">
             <div
               className="relative grid grid-cols-[56px_repeat(7,minmax(0,1fr))]"
               style={{ height: GRID_HEIGHT }}
