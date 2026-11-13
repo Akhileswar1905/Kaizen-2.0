@@ -12,6 +12,8 @@ export const BLOCK_COLORS = [
 ] as const
 export type BlockColor = string
 
+export type EventCategory = "Work" | "Study" | "Personal" | "Meeting" | "Health" | "Other"
+
 export interface TimeBlock {
   id: string
   title: string
@@ -19,6 +21,10 @@ export interface TimeBlock {
   start: string // "HH:mm" (24h)
   end: string // "HH:mm" (24h), always after start on the same day
   color: BlockColor
+  description: string
+  location: string
+  meeting_url: string
+  category: EventCategory
 }
 
 export type TimeBlockInput = Omit<TimeBlock, "id">
@@ -30,6 +36,10 @@ interface BlockRow {
   start_time: string // "HH:mm:ss"
   end_time: string // "HH:mm:ss"
   color: string | null
+  description: string | null
+  location: string | null
+  meeting_url: string | null
+  category: string | null
 }
 
 function rowToBlock(row: BlockRow): TimeBlock {
@@ -43,6 +53,12 @@ function rowToBlock(row: BlockRow): TimeBlock {
     start: row.start_time.slice(0, 5),
     end: row.end_time.slice(0, 5),
     color,
+    description: row.description ?? "",
+    location: row.location ?? "",
+    meeting_url: row.meeting_url ?? "",
+    category: (["Work", "Study", "Personal", "Meeting", "Health", "Other"].includes(row.category ?? "")
+      ? row.category
+      : "Personal") as TimeBlock["category"],
   }
 }
 
@@ -53,6 +69,10 @@ function inputToRow(input: TimeBlockInput) {
     start_time: input.start,
     end_time: input.end,
     color: input.color,
+    description: input.description || null,
+    location: input.location || null,
+    meeting_url: input.meeting_url || null,
+    category: input.category,
   }
 }
 
@@ -104,7 +124,7 @@ export function useTimeBlocks(weekStart: Date) {
 
       const { data, error: fetchError } = await supabase
         .from("time_blocks")
-        .select("id, title, block_date, start_time, end_time, color")
+        .select("id, title, block_date, start_time, end_time, color, description, location, meeting_url, category")
         .eq("user_id", authData.user.id)
         .gte("block_date", from)
         .lte("block_date", to)
@@ -136,7 +156,7 @@ export function useTimeBlocks(weekStart: Date) {
       const { data, error: insertError } = await supabase
         .from("time_blocks")
         .insert({ user_id: userId, ...inputToRow(input) })
-        .select("id, title, block_date, start_time, end_time, color")
+        .select("id, title, block_date, start_time, end_time, color, description, location, meeting_url, category")
         .single()
 
       if (insertError) {
