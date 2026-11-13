@@ -11,6 +11,7 @@ import { AlertCircle, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
@@ -119,6 +120,10 @@ interface DraftBlock {
   start: string
   end: string
   color: string
+  description: string
+  location: string
+  meeting_url: string
+  category: "Work" | "Study" | "Personal" | "Meeting" | "Health" | "Other"
 }
 
 interface DragState {
@@ -187,6 +192,10 @@ export function TimeBlockWeek() {
       start: fromMinutes(startMin),
       end: fromMinutes(Math.min(endMin, 24 * 60 - 1)),
       color: "blue",
+      description: "",
+      location: "",
+      meeting_url: "",
+      category: "Personal",
     })
   }
 
@@ -214,6 +223,10 @@ export function TimeBlockWeek() {
       start: draft.start,
       end: draft.end,
       color: draft.color,
+      description: draft.description.trim(),
+      location: draft.location.trim(),
+      meeting_url: draft.meeting_url.trim(),
+      category: draft.category,
     }
     const ok = draft.id
       ? await updateBlock(draft.id, input)
@@ -312,16 +325,17 @@ export function TimeBlockWeek() {
             <ChevronRight className="h-4 w-4" />
           </Button>
           <span className="min-w-44 text-sm font-bold">{rangeLabel}</span>
-          {!isCurrentWeek && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-8 rounded-full"
-              onClick={() => setWeekStart(startOfWeek(new Date(), WEEK_OPTIONS))}
-            >
-              This week
-            </Button>
-          )}
+          <Button variant="secondary" size="sm" className="h-8 rounded-full" onClick={() => setWeekStart(startOfWeek(new Date(), WEEK_OPTIONS))}>
+            Today
+          </Button>
+          <Button size="sm" className="h-8 rounded-full" onClick={() => {
+            const now = new Date()
+            const start = Math.ceil((now.getHours() * 60 + now.getMinutes()) / 30) * 30
+            openNew(format(now, "yyyy-MM-dd"), start, Math.min(start + 60, 24 * 60 - 1))
+          }}>
+            + New event
+          </Button>
+
         </div>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
@@ -459,13 +473,15 @@ export function TimeBlockWeek() {
                             </span>
                           ) : (
                             <>
-                              <span className="block truncate">
-                                {block.title}
-                              </span>
+                              <span className="block truncate">{block.title}</span>
                               <span className="block truncate font-medium opacity-80">
-                                {formatClock(block.start)} –{" "}
-                                {formatClock(block.end)}
+                                {formatClock(block.start)} – {formatClock(block.end)}
                               </span>
+                              {height >= 72 && block.description && (
+                                <span className="mt-0.5 block overflow-hidden text-[10px] font-normal opacity-85 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
+                                  {block.description}
+                                </span>
+                              )}
                             </>
                           )}
                         </button>
@@ -512,6 +528,54 @@ export function TimeBlockWeek() {
                   value={draft.title}
                   onChange={(e) => setDraft({ ...draft, title: e.target.value })}
                   placeholder="Deep work: agent evals"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="block-description">Description / notes</Label>
+                <Textarea
+                  id="block-description"
+                  value={draft.description}
+                  onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                  placeholder="Add an agenda, reminders or anything you want to remember…"
+                  rows={3}
+                  className="resize-y"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="block-category">Category</Label>
+                  <select
+                    id="block-category"
+                    value={draft.category}
+                    onChange={(e) => setDraft({ ...draft, category: e.target.value as DraftBlock["category"] })}
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    {["Work", "Study", "Personal", "Meeting", "Health", "Other"].map((category) => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="block-location">Location</Label>
+                  <Input
+                    id="block-location"
+                    value={draft.location}
+                    onChange={(e) => setDraft({ ...draft, location: e.target.value })}
+                    placeholder="Office, home…"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="block-meeting-url">Meeting link</Label>
+                <Input
+                  id="block-meeting-url"
+                  type="url"
+                  value={draft.meeting_url}
+                  onChange={(e) => setDraft({ ...draft, meeting_url: e.target.value })}
+                  placeholder="https://…"
                 />
               </div>
 
