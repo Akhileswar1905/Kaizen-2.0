@@ -2,23 +2,64 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./light_icon.png" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#f8f8f8" />
+    <meta name="application-name" content="Kaizen" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Kaizen" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <title>Kaizen — Personal Productivity &amp; Learning Workspace</title>
     <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
+      name="description"
+      content="Build better habits, plan your day, manage tasks and finances, write notes, and track your learning in one calm, all-in-one productivity workspace."
     />
-    <link rel="apple-touch-icon" href="./light_icon.png" />
-    <title>Kaizen</title>
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="author" content="Kaizen" />
+    <meta name="keywords" content="Kaizen, personal productivity, habit tracker, task planner, calendar planner, notes, journaling, learning tracker, DSA tracker, personal finance tracker, productivity workspace" />
+    <link rel="canonical" href="https://kaizen-20.vercel.app/" />
+    <link rel="icon" type="image/svg+xml" href="/kaizen.svg" />
+    <link rel="apple-touch-icon" href="/light_icon.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Kaizen" />
+    <meta property="og:title" content="Kaizen — Personal Productivity &amp; Learning Workspace" />
+    <meta
+      property="og:description"
+      content="Build better habits, plan your day, manage tasks and finances, and track your learning in one calm workspace."
+    />
+    <meta property="og:url" content="https://kaizen-20.vercel.app/" />
+    <meta property="og:image" content="https://kaizen-20.vercel.app/kaizen.png" />
+    <meta property="og:image:alt" content="Kaizen productivity workspace" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Kaizen — Personal Productivity &amp; Learning Workspace" />
+    <meta
+      name="twitter:description"
+      content="A calm workspace for habits, planning, notes, personal finance, and learning."
+    />
+    <meta name="twitter:image" content="https://kaizen-20.vercel.app/kaizen.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Kaizen",
+        "url": "https://kaizen-20.vercel.app/",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "Web",
+        "description": "A personal productivity and learning workspace for habit tracking, task planning, calendar scheduling, notes, journaling, personal finance, and learning progress.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "INR"
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="./src/main.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
