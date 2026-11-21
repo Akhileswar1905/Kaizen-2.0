@@ -77,6 +77,15 @@ const inDays = (days: number) => format(addDays(new Date(), days), "yyyy-MM-dd")
 export const PAGE_TEMPLATES: PageTemplate[] = [
   // ---- Apps
   {
+    id: "projects",
+    name: "Project management",
+    description: "Manage multiple projects, their tasks, deadlines and progress",
+    icon: "FolderKanban",
+    kind: "projects",
+    group: "app",
+    build: () => ({}),
+  },
+  {
     id: "journal",
     name: "Daily journal",
     description: "One entry a day with mood, prompts and streaks",
