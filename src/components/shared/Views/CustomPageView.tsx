@@ -36,6 +36,7 @@ import { TrackerApp } from "../Pages/apps/TrackerApp"
 import { GoalsApp } from "../Pages/apps/GoalsApp"
 import { CountdownApp } from "../Pages/apps/CountdownApp"
 import { FlashcardsApp } from "../Pages/apps/FlashcardsApp"
+import { ProjectManagementView } from "./ProjectManagementView"
 
 const escapeHtml = (text: string) =>
   text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -365,7 +366,7 @@ export function CustomPageView({
           </div>
         </header>
 
-        <PageBody kind={page.kind} content={page.content} onSave={save} />
+        <PageBody kind={page.kind} content={page.content} onSave={save} pageId={page.id} />
       </div>
     </main>
   )
