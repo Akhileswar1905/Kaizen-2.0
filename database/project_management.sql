@@ -1,10 +1,15 @@
--- Kaizen Projects module
+-- Kaizen Projects custom-page app.
+-- Add "projects" to the allowed custom page types (the existing constraint is used by the Customisation page creator).
+alter table public.custom_pages drop constraint if exists custom_pages_kind_check;
+alter table public.custom_pages add constraint custom_pages_kind_check
+  check (kind in ('page', 'table', 'board', 'journal', 'tracker', 'goals', 'countdown', 'flashcards', 'notes', 'checklist', 'projects'));
 -- Run this script once in the Supabase SQL Editor.
--- Projects and project tasks are intentionally separate from daily_todos and calendar time blocks.
+-- Each Projects custom page owns its own project list. Project tasks remain separate from daily_todos and calendar time blocks.
 
 create table if not exists public.projects (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
+  custom_page_id uuid not null references public.custom_pages(id) on delete cascade,
   name text not null check (char_length(trim(name)) between 1 and 90),
   description text not null default '',
   status text not null default 'active' check (status in ('planning', 'active', 'on_hold', 'completed')),
@@ -18,6 +23,8 @@ create table if not exists public.projects (
 
 create index if not exists projects_user_updated_idx
   on public.projects(user_id, updated_at desc);
+create index if not exists projects_custom_page_idx
+  on public.projects(custom_page_id, updated_at desc);
 
 create table if not exists public.project_tasks (
   id uuid primary key default gen_random_uuid(),
