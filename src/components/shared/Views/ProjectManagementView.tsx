@@ -109,13 +109,13 @@ function ProjectDialog({
           <div><h2 className="text-lg font-bold">{initial.name ? "Edit project" : "New project"}</h2><p className="mt-1 text-sm text-muted-foreground">Give this project a name and a clear direction.</p></div>
           <Button type="button" variant="ghost" size="icon" onClick={onClose}><X className="h-4 w-4" /></Button>
         </div>
-        <div className="space-y-2"><label className="text-sm font-semibold">Project name</label><Input autoFocus required maxLength={90} placeholder="e.g. Portfolio redesign" value={form.name} onChange={(e) => update("name", e.target.value)} /></div>
-        <div className="space-y-2"><label className="text-sm font-semibold">Description</label><Textarea rows={3} placeholder="What are you trying to accomplish?" value={form.description} onChange={(e) => update("description", e.target.value)} /></div>
+        <div className="space-y-2"><label className="text-sm font-semibold">Project name</label><Input disabled={readOnly} autoFocus required maxLength={90} placeholder="e.g. Portfolio redesign" value={form.name} onChange={(e) => update("name", e.target.value)} /></div>
+        <div className="space-y-2"><label className="text-sm font-semibold">Description</label><Textarea disabled={readOnly} rows={3} placeholder="What are you trying to accomplish?" value={form.description} onChange={(e) => update("description", e.target.value)} /></div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="space-y-2"><label className="text-sm font-semibold">Status</label><select className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" value={form.status} onChange={(e) => update("status", e.target.value)}>{PROJECT_STATUSES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
+          <div className="space-y-2"><label className="text-sm font-semibold">Status</label><select disabled={readOnly} className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" value={form.status} onChange={(e) => update("status", e.target.value)}>{PROJECT_STATUSES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
           <div className="space-y-2"><label className="text-sm font-semibold">Priority</label><select className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" value={form.priority} onChange={(e) => update("priority", e.target.value)}>{PRIORITIES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
-          <div className="space-y-2"><label className="text-sm font-semibold">Start date</label><Input type="date" value={form.start_date} onChange={(e) => update("start_date", e.target.value)} /></div>
-          <div className="space-y-2"><label className="text-sm font-semibold">Target date</label><Input type="date" value={form.due_date} onChange={(e) => update("due_date", e.target.value)} /></div>
+          <div className="space-y-2"><label className="text-sm font-semibold">Start date</label><Input disabled={readOnly} type="date" value={form.start_date} onChange={(e) => update("start_date", e.target.value)} /></div>
+          <div className="space-y-2"><label className="text-sm font-semibold">Target date</label><Input disabled={readOnly} type="date" value={form.due_date} onChange={(e) => update("due_date", e.target.value)} /></div>
         </div>
         <div className="space-y-2">
           <label className="text-sm font-semibold">Project colour</label>
@@ -131,7 +131,7 @@ function ProjectDialog({
             <span className="text-xs text-muted-foreground">Choose any colour</span>
           </div>
         </div>
-        <div className="flex justify-end gap-2 border-t border-border/60 pt-4"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" disabled={saving || !form.name.trim()}>{saving ? "Saving…" : "Save project"}</Button></div>
+        <div className="flex justify-end gap-2 border-t border-border/60 pt-4"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" disabled={readOnly || saving || !form.name.trim()}>{saving ? "Saving…" : "Save project"}</Button></div>
       </form>
     </div>
   )
@@ -171,7 +171,7 @@ export function ProjectManagementView({ customPageId, readOnly = false }: { cust
       setTasks((taskResult.data ?? []) as ProjectTask[])
     }
     setLoading(false)
-  }, [user?.id])
+  }, [user?.id, customPageId])
 
   useEffect(() => { void loadData() }, [loadData])
 
