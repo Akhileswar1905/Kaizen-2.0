@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { format, parseISO } from "date-fns"
 import {
-  ArrowLeft, CalendarDays, Check, CheckCircle2, Circle, Clock3,
-  FolderKanban, ListTodo, MoreHorizontal, Pencil, Plus, Search,
-  Target, Trash2, X,
+  ArrowLeft, CalendarDays, CheckCircle2, Circle, Clock3,
+  FolderKanban, Pencil, Plus, Search, Trash2, X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -55,7 +54,7 @@ const EMPTY_FORM: ProjectForm = {
   name: "", description: "", status: "active", priority: "medium",
   color: "#64748b", start_date: format(new Date(), "yyyy-MM-dd"), due_date: "",
 }
-const PROJECT_COLORS = ["#64748b", "#64748b", "#0f766e", "#2563eb", "#7c3aed", "#c0841a", "#db6b45", "#be5674"]
+const PROJECT_COLORS = ["#64748b", "#0f766e", "#2563eb", "#7c3aed", "#c0841a", "#db6b45", "#be5674"]
 const PROJECT_STATUSES: { value: ProjectStatus; label: string }[] = [
   { value: "planning", label: "Planning" },
   { value: "active", label: "Active" },
