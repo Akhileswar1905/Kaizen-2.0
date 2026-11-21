@@ -54,7 +54,6 @@ const EMPTY_FORM: ProjectForm = {
   name: "", description: "", status: "active", priority: "medium",
   color: "#64748b", start_date: format(new Date(), "yyyy-MM-dd"), due_date: "",
 }
-const PROJECT_COLORS = ["#64748b", "#0f766e", "#2563eb", "#7c3aed", "#c0841a", "#db6b45", "#be5674"]
 const PROJECT_STATUSES: { value: ProjectStatus; label: string }[] = [
   { value: "planning", label: "Planning" },
   { value: "active", label: "Active" },
