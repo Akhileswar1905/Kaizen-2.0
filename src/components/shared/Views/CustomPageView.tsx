@@ -56,13 +56,17 @@ export function PageBody({
   content,
   onSave,
   readOnly = false,
+  pageId,
 }: {
   kind: CustomPageKind
   content: CustomPageContent
   onSave: (content: CustomPageContent) => void
   readOnly?: boolean
+  pageId?: string
 }) {
   switch (kind) {
+    case "projects":
+      return <ProjectManagementView customPageId={pageId ?? ""} readOnly={readOnly} />
     case "journal":
       return (
         <JournalApp
