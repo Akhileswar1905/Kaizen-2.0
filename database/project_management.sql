@@ -21,6 +21,8 @@ create table if not exists public.projects (
   updated_at timestamptz not null default now()
 );
 
+alter table public.projects add column if not exists custom_page_id uuid references public.custom_pages(id) on delete cascade;
+
 create index if not exists projects_user_updated_idx
   on public.projects(user_id, updated_at desc);
 create index if not exists projects_custom_page_idx
