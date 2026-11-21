@@ -149,6 +149,8 @@ export function ProjectManagementView({ customPageId, readOnly = false }: { cust
   const [search, setSearch] = useState("")
   const [filter, setFilter] = useState<"all" | ProjectStatus>("all")
   const [taskView, setTaskView] = useState<"board" | "list">("board")
+  const [projectView, setProjectView] = useState<"board" | "list">("board")
+  const [pendingConfirmation, setPendingConfirmation] = useState<{ title: string; description: string; action: () => Promise<void> } | null>(null)
   const [newTaskTitle, setNewTaskTitle] = useState("")
   const [newTaskDescription, setNewTaskDescription] = useState("")
   const [newTaskPriority, setNewTaskPriority] = useState<ProjectPriority>("medium")
@@ -207,13 +209,19 @@ export function ProjectManagementView({ customPageId, readOnly = false }: { cust
     setSelectedProjectId(saved.id)
     setDialogOpen(false)
   }
-  const deleteProject = async (project: Project) => {
-    if (readOnly || !user?.id || !window.confirm(`Delete "${project.name}" and all its project tasks?`)) return
-    const { error: deleteError } = await supabase.from("projects").delete().eq("id", project.id).eq("user_id", user.id)
-    if (deleteError) { setError(deleteError.message); return }
-    setProjects((current) => current.filter((item) => item.id !== project.id))
-    setTasks((current) => current.filter((task) => task.project_id !== project.id))
-    setSelectedProjectId(null)
+  const deleteProject = (project: Project) => {
+    if (readOnly || !user?.id) return
+    setPendingConfirmation({
+      title: "Delete project?",
+      description: `“${project.name}” and all its project tasks will be permanently deleted.`,
+      action: async () => {
+        const { error: deleteError } = await supabase.from("projects").delete().eq("id", project.id).eq("user_id", user.id)
+        if (deleteError) { setError(deleteError.message); return }
+        setProjects((current) => current.filter((item) => item.id !== project.id))
+        setTasks((current) => current.filter((task) => task.project_id !== project.id))
+        setSelectedProjectId(null)
+      },
+    })
   }
   const addTask = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -235,12 +243,17 @@ export function ProjectManagementView({ customPageId, readOnly = false }: { cust
     if (updateError) { setError(updateError.message); return }
     setTasks((current) => current.map((item) => item.id === task.id ? data as ProjectTask : item))
   }
-  const deleteTask = async (task: ProjectTask) => {
+  const deleteTask = (task: ProjectTask) => {
     if (readOnly) return
-    if (!window.confirm(`Delete task "${task.title}"?`)) return
-    const { error: deleteError } = await supabase.from("project_tasks").delete().eq("id", task.id).eq("user_id", user?.id)
-    if (deleteError) { setError(deleteError.message); return }
-    setTasks((current) => current.filter((item) => item.id !== task.id))
+    setPendingConfirmation({
+      title: "Delete task?",
+      description: `“${task.title}” will be permanently deleted from this project.`,
+      action: async () => {
+        const { error: deleteError } = await supabase.from("project_tasks").delete().eq("id", task.id).eq("user_id", user?.id)
+        if (deleteError) { setError(deleteError.message); return }
+        setTasks((current) => current.filter((item) => item.id !== task.id))
+      },
+    })
   }
 
   const statusCount = (status: ProjectStatus) => projects.filter((project) => project.status === status).length
@@ -251,6 +264,19 @@ export function ProjectManagementView({ customPageId, readOnly = false }: { cust
   return (
     <div className="min-h-screen bg-background text-foreground">
       <ProjectDialog open={dialogOpen} initial={form} saving={saving} onClose={() => setDialogOpen(false)} onSave={(value) => void saveProject(value)} />
+      {pendingConfirmation && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-background/65 p-4 backdrop-blur-sm" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPendingConfirmation(null) }}>
+          <div role="alertdialog" aria-modal="true" aria-labelledby="project-confirm-title" className="w-full max-w-sm rounded-2xl border border-border/70 bg-card p-5 shadow-2xl">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/10 text-destructive"><Trash2 className="h-5 w-5" /></div>
+            <h2 id="project-confirm-title" className="text-base font-semibold">{pendingConfirmation.title}</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{pendingConfirmation.description}</p>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setPendingConfirmation(null)}>Cancel</Button>
+              <Button variant="destructive" onClick={() => { const action = pendingConfirmation.action; setPendingConfirmation(null); void action() }}>Delete</Button>
+            </div>
+          </div>
+        </div>
+      )}
       {selectedProject ? (
         <div className="mx-auto max-w-[1500px]">
           <div className="sticky top-0 z-20 border-b border-border/70 bg-background/90 px-4 py-3 backdrop-blur-xl sm:px-7">
@@ -321,15 +347,35 @@ export function ProjectManagementView({ customPageId, readOnly = false }: { cust
               <section className="border-t border-border/70 pt-5"><h2 className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Portfolio</h2><div className="rounded-xl border border-border/70 bg-card p-3"><div className="flex items-center justify-between text-xs"><span className="text-muted-foreground">Active projects</span><span className="font-bold">{statusCount("active")}</span></div><div className="mt-3 flex items-center justify-between text-xs"><span className="text-muted-foreground">Completed</span><span className="font-bold">{statusCount("completed")}</span></div><div className="mt-3 h-1.5 rounded-full bg-muted"><div className="h-full rounded-full bg-emerald-600" style={{ width: (projects.length ? statusCount("completed") / projects.length * 100 : 0) + "%" }} /></div></div></section>
             </aside>
             <main className="min-w-0">
-              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="relative w-full sm:max-w-sm"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search projects…" className="h-10 rounded-lg pl-9" /></div><span className="text-xs text-muted-foreground">{filteredProjects.length} projects</span></div>
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="relative w-full sm:max-w-sm"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search projects…" className="h-10 rounded-xl pl-9" /></div><div className="flex items-center justify-between gap-3"><span className="text-xs text-muted-foreground">{filteredProjects.length} projects</span><div className="flex rounded-xl border border-border/70 bg-muted/35 p-1"><button onClick={() => setProjectView("board")} className={cn("rounded-lg px-3 py-1.5 text-xs font-medium", projectView === "board" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>Board</button><button onClick={() => setProjectView("list")} className={cn("rounded-lg px-3 py-1.5 text-xs font-medium", projectView === "list" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>List</button></div></div></div>
               {error && <div role="alert" className="mb-4 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</div>}
               {loading ? <div className="space-y-2">{[1,2,3,4].map((item) => <div key={item} className="h-16 animate-pulse rounded-lg bg-muted/50" />)}</div> : filteredProjects.length ? (
+                {projectView === "board" ? (
+                  <div className="grid gap-3 xl:grid-cols-4">{PROJECT_STATUSES.map((status) => {
+                    const columnProjects = filteredProjects.filter((project) => project.status === status.value)
+                    return <section key={status.value} className="min-h-[300px] rounded-2xl bg-muted/35 p-3">
+                      <div className="mb-3 flex items-center justify-between px-1"><div className="flex items-center gap-2"><span className={cn("h-2 w-2 rounded-full", status.value === "completed" ? "bg-emerald-500" : status.value === "active" ? "bg-blue-500" : status.value === "on_hold" ? "bg-amber-500" : "bg-muted-foreground/50")} /><h3 className="text-xs font-semibold">{status.label}</h3></div><span className="rounded-md bg-background/80 px-2 py-0.5 text-[10px] tabular-nums text-muted-foreground">{columnProjects.length}</span></div>
+                      <div className="space-y-2">{columnProjects.map((project) => {
+                        const list = tasks.filter((task) => task.project_id === project.id)
+                        const done = list.filter((task) => task.status === "done").length
+                        const pct = list.length ? Math.round(done / list.length * 100) : 0
+                        return <button key={project.id} onClick={() => setSelectedProjectId(project.id)} className="w-full rounded-xl border border-border/65 bg-card p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-md">
+                          <div className="mb-2 flex items-center justify-between gap-2"><span className="flex min-w-0 items-center gap-2 text-sm font-semibold"><span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: project.color }} /><span className="truncate">{project.name}</span></span><span className={cn("shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-semibold capitalize", priorityClass[project.priority])}>{project.priority}</span></div>
+                          <p className="line-clamp-2 min-h-8 text-xs leading-4 text-muted-foreground">{project.description || "No description added"}</p>
+                          <div className="mt-4 flex items-center justify-between text-[10px] text-muted-foreground"><span>{list.length} tasks</span><span>{prettyDate(project.due_date)}</span></div>
+                          <div className="mt-2 flex items-center gap-2"><div className="h-1 flex-1 rounded-full bg-muted"><div className="h-full rounded-full" style={{ width: pct + "%", backgroundColor: project.color }} /></div><span className="w-7 text-right text-[10px] tabular-nums text-muted-foreground">{pct}%</span></div>
+                        </button>
+                      })}{columnProjects.length === 0 && <div className="rounded-xl border border-dashed border-border/60 px-3 py-8 text-center text-[11px] text-muted-foreground">No projects</div>}</div>
+                    </section>
+                  })}</div>
+                ) : (
                 <div className="overflow-hidden rounded-xl border border-border/70 bg-card"><div className="hidden grid-cols-[minmax(220px,1.6fr)_120px_100px_120px_110px] gap-3 border-b border-border/70 bg-muted/30 px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground md:grid"><span>Project</span><span>Status</span><span>Priority</span><span>Progress</span><span>Due date</span></div>{filteredProjects.map((project) => {
                   const list = tasks.filter((task) => task.project_id === project.id)
                   const done = list.filter((task) => task.status === "done").length
                   const pct = list.length ? Math.round(done / list.length * 100) : 0
                   return <button key={project.id} onClick={() => setSelectedProjectId(project.id)} className="grid w-full grid-cols-1 gap-2 border-b border-border/60 px-4 py-3 text-left transition-colors last:border-0 hover:bg-muted/30 md:grid-cols-[minmax(220px,1.6fr)_120px_100px_120px_110px] md:items-center md:gap-3"><span className="flex min-w-0 items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold" style={{ color: project.color, backgroundColor: project.color + "18" }}>{project.name.slice(0,1).toUpperCase()}</span><span className="min-w-0"><span className="block truncate text-sm font-semibold">{project.name}</span><span className="block truncate text-xs text-muted-foreground">{project.description || "No description"}</span></span></span><span className="text-xs text-muted-foreground md:block">{statusLabel(project.status)}</span><span className="text-xs capitalize text-muted-foreground">{project.priority}</span><span className="flex items-center gap-2 text-xs"><span className="h-1.5 flex-1 rounded-full bg-muted"><span className="block h-full rounded-full" style={{ width: pct + "%", backgroundColor: project.color }} /></span><span className="w-8 text-right tabular-nums">{pct}%</span></span><span className="text-xs text-muted-foreground">{prettyDate(project.due_date)}</span></button>
                 })}</div>
+                )}
               ) : <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-border/70 px-5 text-center"><FolderKanban className="h-8 w-8 text-muted-foreground/60" /><h2 className="mt-3 text-sm font-semibold">{projects.length ? "No matching projects" : "Create your first project"}</h2><p className="mt-1 max-w-sm text-xs text-muted-foreground">{projects.length ? "Try another search or choose a different view." : "Start by adding a project to organise work, tasks and deadlines."}</p>{projects.length === 0 && <Button className="mt-4" size="sm" onClick={openCreate} disabled={readOnly}><Plus className="mr-2 h-4 w-4" />Create project</Button>}</div>}
             </main>
           </div>
