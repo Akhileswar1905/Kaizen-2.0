@@ -7,7 +7,6 @@ export type BuiltInPageId =
   | "finance"
   | "notes"
   | "planner"
-  | "projects"
   | "calendar"
   | "learning-checklist"
   | "journal"
