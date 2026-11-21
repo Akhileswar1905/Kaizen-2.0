@@ -26,6 +26,7 @@ export type AppKind =
   | "goals"
   | "countdown"
   | "flashcards"
+  | "projects"
 export type CustomPageKind = DocumentKind | AppKind | "notes" | "checklist"
 
 export type ChecklistItem = { id: string; title: string; done: boolean }
@@ -204,12 +205,6 @@ export const BUILT_IN_PAGES: BuiltInPage[] = [
     icon: "ListTodo",
   },
   {
-    id: "projects",
-    label: "Projects",
-    description: "Manage projects, tasks, priorities and deadlines",
-    icon: "FolderKanban",
-  },
-  {
     id: "calendar",
     label: "Calendar",
     description: "Weekly schedule and time blocks",
@@ -369,6 +364,7 @@ const KIND_LABELS: Record<CustomPageKind, string> = {
   goals: "Goals",
   countdown: "Countdowns",
   flashcards: "Flashcards",
+  projects: "Projects",
 }
 
 /** Apps, tables and boards use the full width; documents read better narrower. */
