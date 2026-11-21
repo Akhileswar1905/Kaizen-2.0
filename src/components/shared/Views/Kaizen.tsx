@@ -21,7 +21,6 @@ import { useEffect, useState } from "react"
 import { WorkoutTracker } from "./WorkoutTracker"
 import { PlannerView } from "./PlannerView"
 import { CalendarView } from "./CalendarView"
-import { ProjectManagementView } from "./ProjectManagementView"
 import { TimeAuditView } from "./TimeAuditView"
 import { LearningChecklistView } from "./LearningChecklistView"
 import { HabitTrackerView } from "./HabitTrackerView"
@@ -191,9 +190,6 @@ export default function KaizenTracker() {
     }
     if (activeView === "planner") {
       return <div className="kaizen-page kaizen-page--planner"><PlannerView /></div>
-    }
-    if (activeView === "projects") {
-      return <div className="kaizen-page kaizen-page--projects"><ProjectManagementView /></div>
     }
     if (activeView === "calendar") {
       return <div className="kaizen-page kaizen-page--calendar"><CalendarView /></div>
